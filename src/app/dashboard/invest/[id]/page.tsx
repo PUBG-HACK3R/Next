@@ -21,9 +21,11 @@ interface Plan {
   duration_days: number
   profit_percent: number
   min_investment: number
+  max_investment: number
   capital_return: boolean
   status: string
 }
+
 
 interface UserProfile {
   id: string
@@ -72,6 +74,7 @@ export default function InvestPage() {
         return
       }
 
+
       if (planData) {
         setPlan(planData)
         setAmount(planData.min_investment.toString())
@@ -117,6 +120,13 @@ export default function InvestPage() {
     // Validation
     if (investmentAmount < plan.min_investment) {
       setError(`Minimum investment is ${formatCurrency(plan.min_investment)}`)
+      setInvesting(false)
+      return
+    }
+
+    const maxAmount = plan.max_investment || 50000
+    if (investmentAmount > maxAmount) {
+      setError(`Maximum investment is ${formatCurrency(maxAmount)}`)
       setInvesting(false)
       return
     }
@@ -254,34 +264,42 @@ export default function InvestPage() {
         
         <div className="grid grid-cols-2 gap-4">
           <div className="flex items-center space-x-2">
-            <Clock className="w-4 h-4" />
+            <Clock className="w-3 h-3" />
             <div>
-              <p className="text-sm opacity-90">Duration</p>
-              <p className="font-semibold">{plan.duration_days} Days</p>
+              <p className="text-xs opacity-90">Duration</p>
+              <p className="text-sm font-semibold">{plan.duration_days} Days</p>
             </div>
           </div>
           
           <div className="flex items-center space-x-2">
-            <TrendingUp className="w-4 h-4" />
+            <TrendingUp className="w-3 h-3" />
             <div>
-              <p className="text-sm opacity-90">Profit Rate</p>
-              <p className="font-semibold">{plan.profit_percent}%</p>
+              <p className="text-xs opacity-90">Profit Rate</p>
+              <p className="text-sm font-semibold">{plan.profit_percent}%</p>
             </div>
           </div>
           
           <div className="flex items-center space-x-2">
-            <DollarSign className="w-4 h-4" />
+            <DollarSign className="w-3 h-3" />
             <div>
-              <p className="text-sm opacity-90">Min Investment</p>
-              <p className="font-semibold">{formatCurrency(plan.min_investment)}</p>
+              <p className="text-xs opacity-90">Min Investment</p>
+              <p className="text-sm font-semibold">{formatCurrency(plan.min_investment)}</p>
             </div>
           </div>
           
           <div className="flex items-center space-x-2">
-            <CheckCircle className="w-4 h-4" />
+            <DollarSign className="w-3 h-3" />
             <div>
-              <p className="text-sm opacity-90">Capital Return</p>
-              <p className="font-semibold">{plan.capital_return ? 'Yes' : 'No'}</p>
+              <p className="text-xs opacity-90">Max Investment</p>
+              <p className="text-sm font-semibold">{formatCurrency(plan.max_investment || 50000)}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <CheckCircle className="w-3 h-3" />
+            <div>
+              <p className="text-xs opacity-90">Capital Return</p>
+              <p className="text-sm font-semibold">{plan.capital_return ? 'Yes' : 'No'}</p>
             </div>
           </div>
         </div>
@@ -321,14 +339,14 @@ export default function InvestPage() {
               onChange={(e) => setAmount(e.target.value)}
               required
               min={plan.min_investment}
-              max={profile?.balance || 0}
+              max={Math.min(profile?.balance || 0, plan.max_investment || 50000)}
               step="1"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               placeholder="Enter investment amount"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>Min: {formatCurrency(plan.min_investment)}</span>
-              <span>Max: {profile ? formatCurrency(profile.balance) : 'PKR 0'}</span>
+              <span>Max: {formatCurrency(plan.max_investment || 50000)}</span>
             </div>
           </div>
 
@@ -350,10 +368,10 @@ export default function InvestPage() {
             </button>
             <button
               type="button"
-              onClick={() => setAmount((profile?.balance || 0).toString())}
+              onClick={() => setAmount(Math.min(profile?.balance || 0, plan.max_investment || 50000).toString())}
               className="bg-gray-100 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-200 transition-colors"
             >
-              All
+              Max Available
             </button>
           </div>
 

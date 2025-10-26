@@ -19,6 +19,7 @@ interface Plan {
   duration_days: number
   profit_percent: number
   min_investment: number
+  max_investment: number
   capital_return: boolean
   status: string
   created_at: string
@@ -30,6 +31,7 @@ interface PlanForm {
   duration_days: number
   profit_percent: number
   min_investment: number
+  max_investment: number
   capital_return: boolean
   status: string
 }
@@ -47,6 +49,7 @@ export default function AdminPlansPage() {
     duration_days: 15,
     profit_percent: 5,
     min_investment: 10000,
+    max_investment: 50000,
     capital_return: true,
     status: 'Active'
   })
@@ -73,6 +76,7 @@ export default function AdminPlansPage() {
       duration_days: 15,
       profit_percent: 5,
       min_investment: 10000,
+      max_investment: 50000,
       capital_return: true,
       status: 'Active'
     })
@@ -86,6 +90,7 @@ export default function AdminPlansPage() {
       duration_days: plan.duration_days,
       profit_percent: plan.profit_percent,
       min_investment: plan.min_investment,
+      max_investment: plan.max_investment || 50000,
       capital_return: plan.capital_return,
       status: plan.status
     })
@@ -270,6 +275,14 @@ export default function AdminPlansPage() {
               </div>
 
               <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-900 font-medium">Max Investment</span>
+                </div>
+                <span className="font-medium">{formatCurrency(plan.max_investment || 50000)}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-900 font-medium">Capital Return</span>
                 <span className={`text-sm font-medium ${plan.capital_return ? 'text-green-600' : 'text-red-600'}`}>
                   {plan.capital_return ? 'Yes' : 'No'}
@@ -376,6 +389,20 @@ export default function AdminPlansPage() {
                     type="number"
                     value={formData.min_investment}
                     onChange={(e) => setFormData({ ...formData, min_investment: parseInt(e.target.value) })}
+                    required
+                    min="1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Maximum Investment (PKR)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.max_investment}
+                    onChange={(e) => setFormData({ ...formData, max_investment: parseInt(e.target.value) })}
                     required
                     min="1"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"

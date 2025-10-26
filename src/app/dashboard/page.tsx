@@ -33,6 +33,7 @@ interface Plan {
   duration_days: number
   profit_percent: number
   min_investment: number
+  max_investment: number
   capital_return: boolean
   status: string
 }
@@ -290,21 +291,27 @@ export default function DashboardHome() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-white">{formatCurrency(plan.min_investment)}</div>
-                        <div className="text-slate-400 text-sm">Minimum</div>
+                      <div className="text-right space-y-1">
+                        <div>
+                          <div className="text-lg font-bold text-white">{formatCurrency(plan.min_investment)}</div>
+                          <div className="text-slate-400 text-xs">Minimum</div>
+                        </div>
+                        <div>
+                          <div className="text-lg font-bold text-green-400">{formatCurrency(plan.max_investment || 50000)}</div>
+                          <div className="text-slate-400 text-xs">Maximum</div>
+                        </div>
                       </div>
                     </div>
 
                     {/* Features */}
                     <div className="grid grid-cols-2 gap-4 mb-6">
                       <div className="flex items-center space-x-2">
-                        <DollarSign className="w-4 h-4 text-green-400" />
-                        <span className="text-white/80 text-sm">Capital Return: {plan.capital_return ? 'Yes' : 'No'}</span>
+                        <DollarSign className="w-3 h-3 text-green-400" />
+                        <span className="text-white/80 text-xs">Capital Return: {plan.capital_return ? 'Yes' : 'No'}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Zap className="w-4 h-4 text-yellow-400" />
-                        <span className="text-white/80 text-sm">Auto Compound</span>
+                        <Zap className="w-3 h-3 text-yellow-400" />
+                        <span className="text-white/80 text-xs">Auto Compound</span>
                       </div>
                     </div>
 

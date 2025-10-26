@@ -19,6 +19,7 @@ interface AdminSettings {
   min_deposit_amount: number
   min_withdrawal_amount: number
   withdrawal_fee_percent: number
+  max_investment_amount: number
   whatsapp_support_number: string | null
   whatsapp_group_link: string | null
   deposit_details: {
@@ -48,6 +49,7 @@ export default function AdminSettingsPage() {
   const [minDepositAmount, setMinDepositAmount] = useState(500)
   const [minWithdrawalAmount, setMinWithdrawalAmount] = useState(100)
   const [withdrawalFeePercent, setWithdrawalFeePercent] = useState(3)
+  const [maxInvestmentAmount, setMaxInvestmentAmount] = useState(5000)
   const [whatsappNumber, setWhatsappNumber] = useState('')
   const [whatsappGroupLink, setWhatsappGroupLink] = useState('')
   const [bankName, setBankName] = useState('')
@@ -78,6 +80,7 @@ export default function AdminSettingsPage() {
         setMinDepositAmount(data.min_deposit_amount || 500)
         setMinWithdrawalAmount(data.min_withdrawal_amount || 100)
         setWithdrawalFeePercent(data.withdrawal_fee_percent || 3)
+        setMaxInvestmentAmount(data.max_investment_amount || 5000)
         setWhatsappNumber(data.whatsapp_support_number || '')
         setWhatsappGroupLink(data.whatsapp_group_link || '')
         setBankName(data.deposit_details.bank.name)
@@ -107,6 +110,7 @@ export default function AdminSettingsPage() {
         min_deposit_amount: minDepositAmount,
         min_withdrawal_amount: minWithdrawalAmount,
         withdrawal_fee_percent: withdrawalFeePercent,
+        max_investment_amount: maxInvestmentAmount,
         whatsapp_support_number: whatsappNumber || null,
         whatsapp_group_link: whatsappGroupLink || null,
         deposit_details: {
@@ -242,7 +246,7 @@ export default function AdminSettingsPage() {
             Deposit & Withdrawal Settings
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-medium text-white mb-2">
                 Minimum Deposit Amount (PKR)

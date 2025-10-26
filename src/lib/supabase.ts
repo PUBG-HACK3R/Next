@@ -169,6 +169,7 @@ export type Database = {
           min_deposit_amount: number
           min_withdrawal_amount: number
           withdrawal_fee_percent: number
+          max_investment_amount: number
           deposit_details: any
           whatsapp_support_number: string | null
           whatsapp_group_link: string | null
@@ -183,6 +184,7 @@ export type Database = {
           min_deposit_amount?: number
           min_withdrawal_amount?: number
           withdrawal_fee_percent?: number
+          max_investment_amount?: number
           deposit_details?: any
           whatsapp_support_number?: string | null
           whatsapp_group_link?: string | null
@@ -195,6 +197,7 @@ export type Database = {
           min_deposit_amount?: number
           min_withdrawal_amount?: number
           withdrawal_fee_percent?: number
+          max_investment_amount?: number
           deposit_details?: any
           whatsapp_support_number?: string | null
           whatsapp_group_link?: string | null
