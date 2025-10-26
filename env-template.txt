@@ -1,0 +1,17 @@
+# SmartGrow Mining Environment Variables
+# Copy this file to .env.local and fill in your actual values
+
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Example:
+# NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Instructions:
+# 1. Go to https://supabase.com and create a new project
+# 2. Go to Settings > API in your Supabase dashboard
+# 3. Copy the Project URL and paste it as NEXT_PUBLIC_SUPABASE_URL
+# 4. Copy the anon/public key and paste it as NEXT_PUBLIC_SUPABASE_ANON_KEY
+# 5. Save this file as .env.local in the project root
