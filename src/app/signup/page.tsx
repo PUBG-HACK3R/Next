@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signUp } from '@/lib/auth'
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 import { Eye, EyeOff, Sparkles, ArrowRight, Shield, TrendingUp, Users, Gift, HelpCircle } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
 
-export default function SignupPage() {
+function SignupForm() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -406,5 +406,15 @@ export default function SignupPage() {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="text-white">Loading...</div>
+    </div>}>
+      <SignupForm />
+    </Suspense>
   )
 }
