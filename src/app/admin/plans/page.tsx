@@ -22,6 +22,7 @@ interface Plan {
   max_investment: number
   capital_return: boolean
   status: string
+  purchase_limit_per_user: number | null
   created_at: string
   updated_at: string
 }
@@ -34,6 +35,7 @@ interface PlanForm {
   max_investment: number
   capital_return: boolean
   status: string
+  purchase_limit_per_user: number | null
 }
 
 export default function AdminPlansPage() {
@@ -51,7 +53,8 @@ export default function AdminPlansPage() {
     min_investment: 10000,
     max_investment: 50000,
     capital_return: true,
-    status: 'Active'
+    status: 'Active',
+    purchase_limit_per_user: null
   })
 
   useEffect(() => {
@@ -78,7 +81,8 @@ export default function AdminPlansPage() {
       min_investment: 10000,
       max_investment: 50000,
       capital_return: true,
-      status: 'Active'
+      status: 'Active',
+      purchase_limit_per_user: null
     })
     setEditingPlan(null)
     setShowForm(false)
@@ -92,7 +96,8 @@ export default function AdminPlansPage() {
       min_investment: plan.min_investment,
       max_investment: plan.max_investment || 50000,
       capital_return: plan.capital_return,
-      status: plan.status
+      status: plan.status,
+      purchase_limit_per_user: plan.purchase_limit_per_user
     })
     setEditingPlan(plan)
     setShowForm(true)
@@ -288,6 +293,13 @@ export default function AdminPlansPage() {
                   {plan.capital_return ? 'Yes' : 'No'}
                 </span>
               </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-900 font-medium">Purchase Limit</span>
+                <span className="text-sm font-medium text-blue-600">
+                  {plan.purchase_limit_per_user ? `${plan.purchase_limit_per_user} times` : 'Unlimited'}
+                </span>
+              </div>
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-100">
@@ -422,6 +434,26 @@ export default function AdminPlansPage() {
                     <option value="Premium">Premium</option>
                     <option value="Inactive">Inactive</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Purchase Limit Per User
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.purchase_limit_per_user || ''}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      purchase_limit_per_user: e.target.value ? parseInt(e.target.value) : null 
+                    })}
+                    min="1"
+                    placeholder="Leave empty for unlimited"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Maximum number of times a user can purchase this plan. Leave empty for unlimited purchases.
+                  </p>
                 </div>
 
                 <div className="flex items-center">

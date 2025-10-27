@@ -247,7 +247,7 @@ export default function MyInvestmentsPage() {
     <div className="p-4 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">My Investments</h1>
+        <h1 className="text-2xl font-bold text-white">My Investments</h1>
         <Link
           href="/dashboard"
           className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center space-x-2"
@@ -294,7 +294,7 @@ export default function MyInvestmentsPage() {
 
       {/* Investments List */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Investment History</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">Investment History</h3>
         
         {investments.length === 0 ? (
           <div className="bg-white rounded-lg p-8 text-center border border-gray-200">

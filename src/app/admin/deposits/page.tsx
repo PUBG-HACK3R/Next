@@ -26,13 +26,15 @@ export default function AdminDepositsPage() {
   const [selectedProof, setSelectedProof] = useState<string | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [showRejectModal, setShowRejectModal] = useState<number | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<string>('all')
 
   useEffect(() => {
     fetchDeposits()
-  }, [])
+  }, [statusFilter, dateFilter])
 
   const fetchDeposits = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('deposits')
       .select(`
         *,
@@ -40,8 +42,37 @@ export default function AdminDepositsPage() {
           full_name
         )
       `)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      query = query.eq('status', statusFilter)
+    }
+
+    // Apply date filter
+    if (dateFilter !== 'all') {
+      const now = new Date()
+      let startDate: Date
+      
+      switch (dateFilter) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          break
+        case 'week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          break
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+          break
+        default:
+          startDate = new Date(0)
+      }
+      
+      query = query.gte('created_at', startDate.toISOString())
+    }
+
+    query = query.order('created_at', { ascending: false })
+
+    const { data, error } = await query
 
     if (data) {
       setDeposits(data)
@@ -161,10 +192,57 @@ export default function AdminDepositsPage() {
     }
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'bg-green-100 text-green-800'
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'rejected':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getStatusCount = (status: string) => {
+    return deposits.filter(d => d.status === status).length
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-gray-900">Manage Deposits</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Status:</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All ({deposits.length})</option>
+                <option value="pending">Pending ({getStatusCount('pending')})</option>
+                <option value="approved">Approved ({getStatusCount('approved')})</option>
+                <option value="rejected">Rejected ({getStatusCount('rejected')})</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Period:</label>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">Last 7 Days</option>
+                <option value="month">This Month</option>
+              </select>
+            </div>
+          </div>
+        </div>
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white rounded-lg p-6 shadow-sm">
@@ -181,8 +259,33 @@ export default function AdminDepositsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Manage Deposits</h1>
-        <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-          {deposits.length} Pending
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All ({deposits.length})</option>
+              <option value="pending">Pending ({getStatusCount('pending')})</option>
+              <option value="approved">Approved ({getStatusCount('approved')})</option>
+              <option value="rejected">Rejected ({getStatusCount('rejected')})</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Period:</label>
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">Last 7 Days</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -242,22 +345,36 @@ export default function AdminDepositsPage() {
 
                 {/* Action Buttons */}
                 <div className="flex space-x-3 mt-4 lg:mt-0">
-                  <button
-                    onClick={() => approveDeposit(deposit.id, deposit.amount, deposit.user_id)}
-                    disabled={processingId === deposit.id}
-                    className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Check size={16} />
-                    <span>{processingId === deposit.id ? 'Processing...' : 'Approve'}</span>
-                  </button>
-                  <button
-                    onClick={() => setShowRejectModal(deposit.id)}
-                    disabled={processingId === deposit.id}
-                    className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <X size={16} />
-                    <span>Reject</span>
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(deposit.status)}`}>
+                      {deposit.status.charAt(0).toUpperCase() + deposit.status.slice(1)}
+                    </span>
+                    {deposit.status === 'pending' && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => approveDeposit(deposit.id, deposit.amount, deposit.user_id)}
+                          disabled={processingId === deposit.id}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50 flex items-center space-x-1"
+                        >
+                          <Check size={14} />
+                          <span>Approve</span>
+                        </button>
+                        <button
+                          onClick={() => setShowRejectModal(deposit.id)}
+                          disabled={processingId === deposit.id}
+                          className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 disabled:opacity-50 flex items-center space-x-1"
+                        >
+                          <X size={14} />
+                          <span>Reject</span>
+                        </button>
+                      </div>
+                    )}
+                    {deposit.status === 'rejected' && deposit.rejection_reason && (
+                      <span className="text-xs text-red-600" title={deposit.rejection_reason}>
+                        Reason: {deposit.rejection_reason.length > 20 ? deposit.rejection_reason.substring(0, 20) + '...' : deposit.rejection_reason}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -25,13 +25,15 @@ export default function AdminWithdrawalsPage() {
   const [processingId, setProcessingId] = useState<number | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [showRejectModal, setShowRejectModal] = useState<number | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<string>('all')
 
   useEffect(() => {
     fetchWithdrawals()
-  }, [])
+  }, [statusFilter, dateFilter])
 
   const fetchWithdrawals = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('withdrawals')
       .select(`
         *,
@@ -42,8 +44,37 @@ export default function AdminWithdrawalsPage() {
           withdrawal_account_number
         )
       `)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      query = query.eq('status', statusFilter)
+    }
+
+    // Apply date filter
+    if (dateFilter !== 'all') {
+      const now = new Date()
+      let startDate: Date
+      
+      switch (dateFilter) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          break
+        case 'week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          break
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+          break
+        default:
+          startDate = new Date(0)
+      }
+      
+      query = query.gte('created_at', startDate.toISOString())
+    }
+
+    query = query.order('created_at', { ascending: false })
+
+    const { data, error } = await query
 
     if (data) {
       setWithdrawals(data)
@@ -140,10 +171,57 @@ export default function AdminWithdrawalsPage() {
     setProcessingId(null)
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'bg-green-100 text-green-800'
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'rejected':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getStatusCount = (status: string) => {
+    return withdrawals.filter(w => w.status === status).length
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Manage Withdrawals</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Manage Withdrawals</h1>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Status:</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All ({withdrawals.length})</option>
+                <option value="pending">Pending ({getStatusCount('pending')})</option>
+                <option value="approved">Approved ({getStatusCount('approved')})</option>
+                <option value="rejected">Rejected ({getStatusCount('rejected')})</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Period:</label>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">Last 7 Days</option>
+                <option value="month">This Month</option>
+              </select>
+            </div>
+          </div>
+        </div>
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white rounded-lg p-6 shadow-sm">
@@ -160,16 +238,45 @@ export default function AdminWithdrawalsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Manage Withdrawals</h1>
-        <div className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
-          {withdrawals.length} Pending
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All ({withdrawals.length})</option>
+              <option value="pending">Pending ({getStatusCount('pending')})</option>
+              <option value="approved">Approved ({getStatusCount('approved')})</option>
+              <option value="rejected">Rejected ({getStatusCount('rejected')})</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Period:</label>
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">Last 7 Days</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {withdrawals.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm p-12 text-center">
           <Banknote className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Withdrawals</h3>
-          <p className="text-gray-700">All withdrawal requests have been processed.</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {statusFilter === 'all' ? 'No Withdrawals Found' : `No ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Withdrawals`}
+          </h3>
+          <p className="text-gray-700">
+            {statusFilter === 'all' ? 'No withdrawal requests found for the selected period.' : `No ${statusFilter} withdrawal requests found.`}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -222,24 +329,38 @@ export default function AdminWithdrawalsPage() {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex space-x-3 mt-4 lg:mt-0">
-                  <button
-                    onClick={() => approveWithdrawal(withdrawal.id)}
-                    disabled={processingId === withdrawal.id || !withdrawal.user_profiles?.withdrawal_account_type}
-                    className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Check size={16} />
-                    <span>{processingId === withdrawal.id ? 'Processing...' : 'Approve'}</span>
-                  </button>
-                  <button
-                    onClick={() => setShowRejectModal(withdrawal.id)}
-                    disabled={processingId === withdrawal.id}
-                    className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <X size={16} />
-                    <span>Reject</span>
-                  </button>
+                {/* Status and Action Buttons */}
+                <div className="flex items-center space-x-3 mt-4 lg:mt-0">
+                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(withdrawal.status)}`}>
+                    {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
+                  </span>
+                  
+                  {withdrawal.status === 'pending' && (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => approveWithdrawal(withdrawal.id)}
+                        disabled={processingId === withdrawal.id || !withdrawal.user_profiles?.withdrawal_account_type}
+                        className="flex items-center space-x-2 bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Check size={14} />
+                        <span>{processingId === withdrawal.id ? 'Processing...' : 'Approve'}</span>
+                      </button>
+                      <button
+                        onClick={() => setShowRejectModal(withdrawal.id)}
+                        disabled={processingId === withdrawal.id}
+                        className="flex items-center space-x-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <X size={14} />
+                        <span>Reject</span>
+                      </button>
+                    </div>
+                  )}
+                  
+                  {withdrawal.status === 'rejected' && withdrawal.rejection_reason && (
+                    <span className="text-xs text-red-600" title={withdrawal.rejection_reason}>
+                      Reason: {withdrawal.rejection_reason.length > 20 ? withdrawal.rejection_reason.substring(0, 20) + '...' : withdrawal.rejection_reason}
+                    </span>
+                  )}
                 </div>
               </div>
 

@@ -11,7 +11,18 @@ import {
   Share2, 
   Gift,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  Calendar,
+  Target,
+  ArrowUpRight,
+  ArrowDownRight,
+  Wallet,
+  Search,
+  Filter,
+  ChevronDown,
+  Star,
+  Trophy,
+  Zap
 } from 'lucide-react'
 
 interface UserProfile {
@@ -32,6 +43,24 @@ interface ReferralStats {
   level2Count: number
   level3Count: number
   totalEarnings: number
+  todayEarnings: number
+  yesterdayEarnings: number
+  level1Earnings: number
+  level2Earnings: number
+  level3Earnings: number
+}
+
+interface ReferralUser {
+  id: string
+  full_name: string
+  email: string
+  referral_code: string
+  created_at: string
+  level: number
+  totalDeposits: number
+  totalWithdrawals: number
+  totalEarnings: number
+  isActive: boolean
 }
 
 export default function InvitePage() {
@@ -42,20 +71,42 @@ export default function InvitePage() {
     level1Count: 0,
     level2Count: 0,
     level3Count: 0,
-    totalEarnings: 0
+    totalEarnings: 0,
+    todayEarnings: 0,
+    yesterdayEarnings: 0,
+    level1Earnings: 0,
+    level2Earnings: 0,
+    level3Earnings: 0
   })
+  const [referralHistory, setReferralHistory] = useState<ReferralUser[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortBy, setSortBy] = useState('joinDate')
+  const [levelFilter, setLevelFilter] = useState<number | 'all'>('all')
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   const router = useRouter()
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (showFilterDropdown && !target.closest('.filter-dropdown')) {
+        setShowFilterDropdown(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showFilterDropdown])
 
   const fetchReferralStats = async (referralCode: string, userId: string) => {
     try {
-      
       // Count Level 1 referrals (direct referrals)
       // Note: referred_by stores the USER ID, not the referral code
       const { data: level1Data, error: level1Error } = await supabase
         .from('user_profiles')
-        .select('id, referral_code, full_name, referred_by')
+        .select('id, referral_code, full_name, referred_by, created_at')
         .eq('referred_by', userId)
 
       if (level1Error) throw level1Error
@@ -66,8 +117,9 @@ export default function InvitePage() {
 
       // Count Level 2 referrals (referrals of referrals)
       let level2Count = 0
-      if (level1UserIds.length > 0) {
-        // Level 2 users are those referred by Level 1 users
+      if (level1Data && level1Data.length > 0) {
+        // Level 2 users are those referred by Level 1 users (using their user IDs)
+        const level1UserIds = level1Data.map(user => user.id)
         const { data: level2Data, error: level2Error } = await supabase
           .from('user_profiles')
           .select('id')
@@ -82,23 +134,61 @@ export default function InvitePage() {
       let level3Count = 0
       // TODO: Implement level 3 counting if needed
 
-      // Calculate total earnings from referral commissions
+      // Calculate earnings from referral commissions
       const { data: commissionData, error: commissionError } = await supabase
         .from('referral_commissions')
-        .select('commission_amount')
+        .select('commission_amount, level, created_at')
         .eq('referrer_id', userId)
 
       let totalEarnings = 0
+      let todayEarnings = 0
+      let yesterdayEarnings = 0
+      let level1Earnings = 0
+      let level2Earnings = 0
+      let level3Earnings = 0
+      
       if (!commissionError && commissionData) {
-        totalEarnings = commissionData.reduce((sum, commission) => sum + commission.commission_amount, 0)
+        const today = new Date()
+        const yesterday = new Date(today)
+        yesterday.setDate(yesterday.getDate() - 1)
+        
+        commissionData.forEach(commission => {
+          const amount = commission.commission_amount
+          totalEarnings += amount
+          
+          // Calculate today's and yesterday's earnings
+          const commissionDate = new Date(commission.created_at)
+          if (commissionDate.toDateString() === today.toDateString()) {
+            todayEarnings += amount
+          } else if (commissionDate.toDateString() === yesterday.toDateString()) {
+            yesterdayEarnings += amount
+          }
+          
+          // Calculate level-specific earnings
+          if (commission.level === 1) {
+            level1Earnings += amount
+          } else if (commission.level === 2) {
+            level2Earnings += amount
+          } else if (commission.level === 3) {
+            level3Earnings += amount
+          }
+        })
       }
       
       setStats({
         level1Count,
         level2Count,
         level3Count,
-        totalEarnings
+        totalEarnings,
+        todayEarnings,
+        yesterdayEarnings,
+        level1Earnings,
+        level2Earnings,
+        level3Earnings
       })
+
+      // Fetch detailed referral history
+      await fetchReferralHistory(userId, level1Data || [])
 
     } catch (error) {
       console.error('Error fetching referral stats:', error)
@@ -107,8 +197,166 @@ export default function InvitePage() {
         level1Count: 0,
         level2Count: 0,
         level3Count: 0,
-        totalEarnings: 0
+        totalEarnings: 0,
+        todayEarnings: 0,
+        yesterdayEarnings: 0,
+        level1Earnings: 0,
+        level2Earnings: 0,
+        level3Earnings: 0
       })
+    }
+  }
+
+  const fetchReferralHistory = async (userId: string, level1Users: any[]) => {
+    try {
+      const allReferrals: ReferralUser[] = []
+
+      // Process Level 1 users
+      for (const user of level1Users) {
+        const userStats = await getUserStats(user.id)
+        allReferrals.push({
+          id: user.id,
+          full_name: user.full_name,
+          email: user.email || `${user.full_name.toLowerCase().replace(' ', '.')}@email.com`,
+          referral_code: user.referral_code,
+          created_at: user.created_at,
+          level: 1,
+          totalDeposits: userStats.totalDeposits,
+          totalWithdrawals: userStats.totalWithdrawals,
+          totalEarnings: userStats.totalEarnings,
+          isActive: userStats.activePlans > 0
+        })
+      }
+
+      // Get Level 2 users
+      if (level1Users.length > 0) {
+        const level1UserIds = level1Users.map(u => u.id)
+        const { data: level2Users } = await supabase
+          .from('user_profiles')
+          .select('id, full_name, email, referral_code, created_at, referred_by')
+          .in('referred_by', level1UserIds)
+
+        if (level2Users) {
+          for (const user of level2Users) {
+            const userStats = await getUserStats(user.id)
+            allReferrals.push({
+              id: user.id,
+              full_name: user.full_name,
+              email: user.email || `${user.full_name.toLowerCase().replace(' ', '.')}@email.com`,
+              referral_code: user.referral_code,
+              created_at: user.created_at,
+              level: 2,
+              totalDeposits: userStats.totalDeposits,
+              totalWithdrawals: userStats.totalWithdrawals,
+              totalEarnings: userStats.totalEarnings,
+              isActive: userStats.activePlans > 0
+            })
+          }
+
+          // Get Level 3 users
+          const level2UserIds = level2Users.map(u => u.id)
+          if (level2UserIds.length > 0) {
+            const { data: level3Users } = await supabase
+              .from('user_profiles')
+              .select('id, full_name, email, referral_code, created_at, referred_by')
+              .in('referred_by', level2UserIds)
+
+            if (level3Users) {
+              for (const user of level3Users) {
+                const userStats = await getUserStats(user.id)
+                allReferrals.push({
+                  id: user.id,
+                  full_name: user.full_name,
+                  email: user.email || `${user.full_name.toLowerCase().replace(' ', '.')}@email.com`,
+                  referral_code: user.referral_code,
+                  created_at: user.created_at,
+                  level: 3,
+                  totalDeposits: userStats.totalDeposits,
+                  totalWithdrawals: userStats.totalWithdrawals,
+                  totalEarnings: userStats.totalEarnings,
+                  isActive: userStats.activePlans > 0
+                })
+              }
+            }
+          }
+        }
+      }
+
+      setReferralHistory(allReferrals)
+    } catch (error) {
+      console.error('Error fetching referral history:', error)
+    }
+  }
+
+  const getUserStats = async (userId: string) => {
+    try {
+      // Get total deposits - try different status values
+      const { data: deposits } = await supabase
+        .from('deposits')
+        .select('amount, status')
+        .eq('user_id', userId)
+      
+      const totalDeposits = deposits?.reduce((sum, d) => {
+        // Include completed, approved, and successful deposits
+        if (['Completed', 'completed', 'Approved', 'approved', 'Success', 'success'].includes(d.status)) {
+          return sum + d.amount
+        }
+        return sum
+      }, 0) || 0
+
+      // Get total withdrawals
+      const { data: withdrawals } = await supabase
+        .from('withdrawals')
+        .select('amount, status')
+        .eq('user_id', userId)
+
+      const totalWithdrawals = withdrawals?.reduce((sum, w) => {
+        if (['Completed', 'completed', 'Approved', 'approved', 'Success', 'success'].includes(w.status)) {
+          return sum + w.amount
+        }
+        return sum
+      }, 0) || 0
+
+      // Get total investments and active plans from 'investments' table
+      const { data: investmentsData, error: investmentsDataError } = await supabase
+        .from('investments')
+        .select('amount_invested, status')
+        .eq('user_id', userId)
+      
+      let totalInvestments = 0
+      let activePlans = 0
+      
+      if (!investmentsDataError && investmentsData && investmentsData.length > 0) {
+        // Use the correct column name: amount_invested
+        totalInvestments = investmentsData.reduce((sum, inv) => sum + (inv.amount_invested || 0), 0)
+        
+        // Count active plans
+        activePlans = investmentsData.filter(inv => 
+          ['Active', 'active', 'Running', 'running', 'Approved', 'approved'].includes(inv.status)
+        ).length
+      }
+
+      // For now, set totalEarnings to 0 since daily_income table doesn't exist
+      // This can be calculated from other sources later
+      const totalEarnings = 0
+
+      return {
+        totalDeposits,
+        totalWithdrawals,
+        totalInvestments,
+        totalEarnings,
+        activePlans
+      }
+
+    } catch (error) {
+      console.error('Error fetching user stats:', error)
+      return {
+        totalDeposits: 0,
+        totalWithdrawals: 0,
+        totalInvestments: 0,
+        totalEarnings: 0,
+        activePlans: 0
+      }
     }
   }
 
@@ -192,194 +440,378 @@ export default function InvitePage() {
     }).format(amount)
   }
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  const getLevelBadge = (level: number) => {
+    const badges = {
+      1: { color: 'bg-blue-100 text-blue-800', text: 'Level 1' },
+      2: { color: 'bg-green-100 text-green-800', text: 'Level 2' },
+      3: { color: 'bg-purple-100 text-purple-800', text: 'Level 3' }
+    }
+    return badges[level as keyof typeof badges] || badges[1]
+  }
+
+  const filteredReferrals = referralHistory.filter(referral => {
+    const matchesSearch = referral.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesLevel = levelFilter === 'all' || referral.level === levelFilter
+    return matchesSearch && matchesLevel
+  })
+
   if (loading) {
     return (
-      <div className="p-4 space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-          <div className="h-32 bg-gray-200 rounded mb-6"></div>
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="h-20 bg-gray-200 rounded"></div>
-            <div className="h-20 bg-gray-200 rounded"></div>
-            <div className="h-20 bg-gray-200 rounded"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-white/60 rounded-lg w-1/3 mb-8"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 bg-white/60 rounded-xl"></div>
+              ))}
+            </div>
+            <div className="h-64 bg-white/60 rounded-xl"></div>
           </div>
-          <div className="h-48 bg-gray-200 rounded"></div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-4 space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Invite Friends</h1>
-        <p className="text-gray-600">Earn commissions by referring new investors</p>
-      </div>
-
-      {/* Referral Link Card */}
-      <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
-        <div className="flex items-center mb-4">
-          <Gift className="w-6 h-6 mr-2" />
-          <h2 className="text-lg font-semibold">Your Referral Link</h2>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 font-['Inter',_sans-serif]">
+      <div className="max-w-7xl mx-auto space-y-8">
         
-        <div className="bg-white rounded-lg p-4 mb-4 border-2 border-white/30">
-          <p className="text-sm font-mono break-all text-gray-800 font-medium">{getReferralLink()}</p>
+        {/* Header */}
+        <div className="text-center mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2 md:mb-3">
+            My Referral Dashboard
+          </h1>
+          <p className="text-gray-600 text-base md:text-lg">Track your referral performance and earnings</p>
         </div>
 
-        <div className="flex space-x-3">
-          <button
-            onClick={copyToClipboard}
-            className="flex items-center justify-center space-x-2 bg-white text-green-600 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex-1 font-medium shadow-sm"
-          >
-            {copied ? <Check size={16} /> : <Copy size={16} />}
-            <span>{copied ? 'Copied!' : 'Copy Link'}</span>
-          </button>
-          <button
-            onClick={shareReferralLink}
-            className="flex items-center justify-center space-x-2 bg-white text-green-600 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors flex-1 font-medium shadow-sm"
-          >
-            <Share2 size={16} />
-            <span>Share</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Commission Rates */}
-      {settings && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2" />
-            Commission Structure
-          </h3>
+        {/* Referral Link Card - Moved to top */}
+        <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl md:rounded-2xl p-4 md:p-8 text-white">
+          <div className="flex items-center mb-4 md:mb-6">
+            <Gift className="w-6 h-6 md:w-8 md:h-8 mr-3 md:mr-4" />
+            <h2 className="text-lg md:text-2xl font-bold">Your Referral Link</h2>
+          </div>
           
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <span className="text-sm font-bold text-blue-600">L1</span>
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg md:rounded-xl p-3 md:p-4 mb-4 md:mb-6 border border-white/30">
+            <p className="text-xs md:text-sm font-mono break-all text-white/90 font-medium">{getReferralLink()}</p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+            <button
+              onClick={copyToClipboard}
+              className="flex items-center justify-center space-x-2 bg-white/20 backdrop-blur-sm text-white px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl hover:bg-white/30 transition-all duration-200 flex-1 font-medium border border-white/30"
+            >
+              {copied ? <Check size={16} className="md:w-[18px] md:h-[18px]" /> : <Copy size={16} className="md:w-[18px] md:h-[18px]" />}
+              <span className="text-sm md:text-base">{copied ? 'Copied!' : 'Copy Link'}</span>
+            </button>
+            <button
+              onClick={shareReferralLink}
+              className="flex items-center justify-center space-x-2 bg-white/20 backdrop-blur-sm text-white px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl hover:bg-white/30 transition-all duration-200 flex-1 font-medium border border-white/30"
+            >
+              <Share2 size={16} className="md:w-[18px] md:h-[18px]" />
+              <span className="text-sm md:text-base">Share</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Referral Program Summary Card */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-lg border border-white/20 p-4 md:p-8">
+          <div className="flex items-center mb-4 md:mb-6">
+            <div className="p-2 md:p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg md:rounded-xl mr-3 md:mr-4">
+              <Trophy className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <h2 className="text-lg md:text-2xl font-bold text-gray-800">Referral Program</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg md:rounded-xl p-4 md:p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-green-100 text-sm md:text-base">Today Commission</span>
+                <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5 text-green-200" />
               </div>
-              <p className="text-sm text-gray-600">Direct Referrals</p>
-              <p className="text-xl font-bold text-blue-600">{settings.referral_l1_percent}%</p>
+              <div className="text-2xl md:text-3xl font-bold">{formatCurrency(stats.todayEarnings)}</div>
+              <div className="text-green-200 text-xs md:text-sm mt-1">Real-time data</div>
             </div>
             
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <span className="text-sm font-bold text-green-600">L2</span>
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg md:rounded-xl p-4 md:p-6 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-blue-100 text-sm md:text-base">Yesterday Commission</span>
+                <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-blue-200" />
               </div>
-              <p className="text-sm text-gray-600">2nd Level</p>
-              <p className="text-xl font-bold text-green-600">{settings.referral_l2_percent}%</p>
+              <div className="text-2xl md:text-3xl font-bold">{formatCurrency(stats.yesterdayEarnings)}</div>
+              <div className="text-blue-200 text-xs md:text-sm mt-1">Previous day</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Commission Earnings Card */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-lg border border-white/20 p-4 md:p-8">
+          <div className="flex items-center mb-4 md:mb-6">
+            <div className="p-2 md:p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg md:rounded-xl mr-3 md:mr-4">
+              <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <h2 className="text-lg md:text-2xl font-bold text-gray-800">Level Commissions</h2>
+          </div>
+          
+          <div className="space-y-3 md:space-y-4">
+            <div className="flex items-center justify-between p-3 md:p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg md:rounded-xl border border-blue-200">
+              <div className="flex items-center">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3 md:mr-4">
+                  <span className="text-white font-bold text-sm md:text-base">L1</span>
+                </div>
+                <div>
+                  <span className="text-gray-700 font-medium text-sm md:text-base">Level 1</span>
+                  {settings && (
+                    <div className="text-blue-500 text-xs md:text-sm font-medium">{settings.referral_l1_percent}% commission</div>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg md:text-2xl font-bold text-blue-600">{formatCurrency(stats.level1Earnings)}</div>
+                <div className="text-blue-500 text-xs md:text-sm">Direct referrals</div>
+              </div>
             </div>
             
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <span className="text-sm font-bold text-purple-600">L3</span>
+            <div className="flex items-center justify-between p-3 md:p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg md:rounded-xl border border-green-200">
+              <div className="flex items-center">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-green-500 rounded-lg flex items-center justify-center mr-3 md:mr-4">
+                  <span className="text-white font-bold text-sm md:text-base">L2</span>
+                </div>
+                <div>
+                  <span className="text-gray-700 font-medium text-sm md:text-base">Level 2</span>
+                  {settings && (
+                    <div className="text-green-500 text-xs md:text-sm font-medium">{settings.referral_l2_percent}% commission</div>
+                  )}
+                </div>
               </div>
-              <p className="text-sm text-gray-600">3rd Level</p>
-              <p className="text-xl font-bold text-purple-600">{settings.referral_l3_percent}%</p>
+              <div className="text-right">
+                <div className="text-lg md:text-2xl font-bold text-green-600">{formatCurrency(stats.level2Earnings)}</div>
+                <div className="text-green-500 text-xs md:text-sm">2nd level referrals</div>
+              </div>
             </div>
-          </div>
-
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">How it works:</h4>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• <strong>Level 1:</strong> Earn {settings.referral_l1_percent}% commission on direct referrals' deposits</li>
-              <li>• <strong>Level 2:</strong> Earn {settings.referral_l2_percent}% commission on your referrals' referrals</li>
-              <li>• <strong>Level 3:</strong> Earn {settings.referral_l3_percent}% commission on 3rd level referrals</li>
-              <li>• Commissions are paid when referred users make deposits</li>
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {/* Referral Stats */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Users className="w-5 h-5 mr-2" />
-          Your Referral Stats
-        </h3>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-gray-600">Level 1 Referrals</p>
-            <p className="text-2xl font-bold text-blue-600">{stats.level1Count}</p>
-          </div>
-          
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <p className="text-sm text-gray-600">Level 2 Referrals</p>
-            <p className="text-2xl font-bold text-green-600">{stats.level2Count}</p>
-          </div>
-          
-          <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <p className="text-sm text-gray-600">Level 3 Referrals</p>
-            <p className="text-2xl font-bold text-purple-600">{stats.level3Count}</p>
-          </div>
-          
-          <div className="text-center p-4 bg-yellow-50 rounded-lg">
-            <p className="text-sm text-gray-600">Total Earnings</p>
-            <p className="text-2xl font-bold text-yellow-600">{formatCurrency(stats.totalEarnings)}</p>
-          </div>
-        </div>
-
-        {stats.level1Count === 0 && (
-          <div className="text-center py-8">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="w-6 h-6 text-gray-400" />
-            </div>
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No referrals yet</h4>
-            <p className="text-gray-500 mb-4">Start sharing your referral link to earn commissions!</p>
-          </div>
-        )}
-      </div>
-
-      {/* How to Refer */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">How to Refer Friends</h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-xs font-bold text-green-600">1</span>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Share Your Link</h4>
-              <p className="text-sm text-gray-600">Copy and share your unique referral link with friends and family.</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-xs font-bold text-green-600">2</span>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900">They Sign Up</h4>
-              <p className="text-sm text-gray-600">When someone uses your link to create an account, they become your referral.</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-xs font-bold text-green-600">3</span>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Earn Commissions</h4>
-              <p className="text-sm text-gray-600">You earn commissions when your referrals make deposits and investments.</p>
+            
+            <div className="flex items-center justify-between p-3 md:p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg md:rounded-xl border border-purple-200">
+              <div className="flex items-center">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-3 md:mr-4">
+                  <span className="text-white font-bold text-sm md:text-base">L3</span>
+                </div>
+                <div>
+                  <span className="text-gray-700 font-medium text-sm md:text-base">Level 3</span>
+                  {settings && (
+                    <div className="text-purple-500 text-xs md:text-sm font-medium">{settings.referral_l3_percent}% commission</div>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg md:text-2xl font-bold text-purple-600">{formatCurrency(stats.level3Earnings)}</div>
+                <div className="text-purple-500 text-xs md:text-sm">3rd level referrals</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Tips for Success */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-900 mb-4">Tips for Success</h3>
-        <ul className="space-y-2 text-sm text-blue-800">
-          <li>• Share your experience with SmartGrow Mining</li>
-          <li>• Explain the benefits of cryptocurrency mining investments</li>
-          <li>• Be transparent about risks and returns</li>
-          <li>• Help your referrals understand the platform</li>
-          <li>• Stay active and engaged with your network</li>
-        </ul>
+        {/* Active Referrals Card */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-lg border border-white/20 p-4 md:p-8">
+          <div className="flex items-center mb-4 md:mb-6">
+            <div className="p-2 md:p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg md:rounded-xl mr-3 md:mr-4">
+              <Users className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <h2 className="text-lg md:text-2xl font-bold text-gray-800">Active Referrals</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
+              <div className="text-3xl md:text-4xl font-bold mb-2">{stats.level1Count}</div>
+              <div className="text-blue-100 font-medium text-sm md:text-base">L1 Active</div>
+              <div className="mt-1 md:mt-2 text-blue-200 text-xs md:text-sm">Direct referrals</div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
+              <div className="text-3xl md:text-4xl font-bold mb-2">{stats.level2Count.toString().padStart(2, '0')}</div>
+              <div className="text-green-100 font-medium text-sm md:text-base">L2 Active</div>
+              <div className="mt-1 md:mt-2 text-green-200 text-xs md:text-sm">2nd level referrals</div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
+              <div className="text-3xl md:text-4xl font-bold mb-2">{stats.level3Count.toString().padStart(2, '0')}</div>
+              <div className="text-purple-100 font-medium text-sm md:text-base">L3 Active</div>
+              <div className="mt-1 md:mt-2 text-purple-200 text-xs md:text-sm">3rd level referrals</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Referral Tree Card */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-lg border border-white/20 p-4 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6 space-y-4 md:space-y-0">
+            <div className="flex items-center">
+              <div className="p-2 md:p-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg md:rounded-xl mr-3 md:mr-4">
+                <Target className="w-5 h-5 md:w-6 md:h-6 text-white" />
+              </div>
+              <h2 className="text-lg md:text-2xl font-bold text-gray-800">Referral Tree</h2>
+            </div>
+            
+            {/* Search and Filter */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+              <div className="relative flex-1 sm:flex-none">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full sm:w-auto pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+                />
+              </div>
+              <div className="relative filter-dropdown">
+                <button 
+                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                  className="flex items-center justify-center space-x-2 px-3 md:px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base"
+                >
+                  <Filter className="w-4 h-4" />
+                  <span className="hidden sm:inline">
+                    {levelFilter === 'all' ? 'All Levels' : `Level ${levelFilter}`}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showFilterDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {showFilterDropdown && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                    <div className="py-2">
+                      <button
+                        onClick={() => {
+                          setLevelFilter('all')
+                          setShowFilterDropdown(false)
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                          levelFilter === 'all' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        All Levels ({referralHistory.length})
+                      </button>
+                      <button
+                        onClick={() => {
+                          setLevelFilter(1)
+                          setShowFilterDropdown(false)
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                          levelFilter === 1 ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        Level 1 ({stats.level1Count})
+                      </button>
+                      <button
+                        onClick={() => {
+                          setLevelFilter(2)
+                          setShowFilterDropdown(false)
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                          levelFilter === 2 ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        Level 2 ({stats.level2Count})
+                      </button>
+                      <button
+                        onClick={() => {
+                          setLevelFilter(3)
+                          setShowFilterDropdown(false)
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                          levelFilter === 3 ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        Level 3 ({stats.level3Count})
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Table */}
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 md:py-4 px-2 md:px-4 font-semibold text-gray-700 text-xs md:text-sm">Level</th>
+                    <th className="text-left py-3 md:py-4 px-2 md:px-4 font-semibold text-gray-700 text-xs md:text-sm min-w-[150px]">User Email</th>
+                    <th className="text-left py-3 md:py-4 px-2 md:px-4 font-semibold text-gray-700 text-xs md:text-sm">Earning</th>
+                    <th className="text-left py-3 md:py-4 px-2 md:px-4 font-semibold text-gray-700 text-xs md:text-sm">Deposit</th>
+                    <th className="text-left py-3 md:py-4 px-2 md:px-4 font-semibold text-gray-700 text-xs md:text-sm">Withdrawals</th>
+                    <th className="text-left py-3 md:py-4 px-2 md:px-4 font-semibold text-gray-700 text-xs md:text-sm">Join Date</th>
+                    <th className="text-left py-3 md:py-4 px-2 md:px-4 font-semibold text-gray-700 text-xs md:text-sm">Active</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredReferrals.map((referral, index) => (
+                    <tr 
+                      key={index} 
+                      className={`border-b border-gray-100 hover:bg-blue-50/50 transition-colors ${
+                        index % 2 === 0 ? 'bg-gray-50/30' : 'bg-white/30'
+                      }`}
+                    >
+                      <td className="py-3 md:py-4 px-2 md:px-4">
+                        <span className={`inline-flex items-center px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
+                          referral.level === 1 ? 'bg-blue-100 text-blue-800' :
+                          referral.level === 2 ? 'bg-green-100 text-green-800' :
+                          'bg-purple-100 text-purple-800'
+                        }`}>
+                          L{referral.level}
+                        </span>
+                      </td>
+                      <td className="py-3 md:py-4 px-2 md:px-4 text-gray-700 text-xs md:text-sm">
+                        <div className="truncate max-w-[120px] md:max-w-none" title={referral.email}>
+                          {referral.email}
+                        </div>
+                      </td>
+                      <td className="py-3 md:py-4 px-2 md:px-4 font-semibold text-gray-800 text-xs md:text-sm">
+                        <div className="whitespace-nowrap">{formatCurrency(referral.totalEarnings)}</div>
+                      </td>
+                      <td className="py-3 md:py-4 px-2 md:px-4 font-semibold text-gray-800 text-xs md:text-sm">
+                        <div className="whitespace-nowrap">{formatCurrency(referral.totalDeposits)}</div>
+                      </td>
+                      <td className="py-3 md:py-4 px-2 md:px-4 font-semibold text-gray-800 text-xs md:text-sm">
+                        <div className="whitespace-nowrap">{formatCurrency(referral.totalWithdrawals)}</div>
+                      </td>
+                      <td className="py-3 md:py-4 px-2 md:px-4 text-gray-600 text-xs md:text-sm">
+                        <div className="whitespace-nowrap">{formatDate(referral.created_at)}</div>
+                      </td>
+                      <td className="py-3 md:py-4 px-2 md:px-4">
+                        <span className={`inline-flex items-center px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
+                          referral.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {referral.isActive ? 'Yes' : 'No'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          {filteredReferrals.length === 0 && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No referrals found</h3>
+              <p className="text-gray-500">Try adjusting your search criteria</p>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   )
 }
+

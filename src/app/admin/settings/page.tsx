@@ -14,6 +14,7 @@ import {
 interface AdminSettings {
   id: number
   referral_l1_percent: number
+  referral_l1_deposit_percent: number
   referral_l2_percent: number
   referral_l3_percent: number
   min_deposit_amount: number
@@ -44,6 +45,7 @@ export default function AdminSettingsPage() {
 
   // Form states
   const [referralL1, setReferralL1] = useState(5)
+  const [referralL1Deposit, setReferralL1Deposit] = useState(5)
   const [referralL2, setReferralL2] = useState(3)
   const [referralL3, setReferralL3] = useState(2)
   const [minDepositAmount, setMinDepositAmount] = useState(500)
@@ -75,6 +77,7 @@ export default function AdminSettingsPage() {
       if (data) {
         setSettings(data)
         setReferralL1(data.referral_l1_percent)
+        setReferralL1Deposit(data.referral_l1_deposit_percent || 5)
         setReferralL2(data.referral_l2_percent)
         setReferralL3(data.referral_l3_percent)
         setMinDepositAmount(data.min_deposit_amount || 500)
@@ -105,6 +108,7 @@ export default function AdminSettingsPage() {
     try {
       const updatedSettings = {
         referral_l1_percent: referralL1,
+        referral_l1_deposit_percent: referralL1Deposit,
         referral_l2_percent: referralL2,
         referral_l3_percent: referralL3,
         min_deposit_amount: minDepositAmount,
@@ -184,10 +188,10 @@ export default function AdminSettingsPage() {
             Referral Commission Settings
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
-                Level 1 Commission (%)
+                Level 1 Earnings Commission (%)
               </label>
               <input
                 type="number"
@@ -199,12 +203,29 @@ export default function AdminSettingsPage() {
                 step="0.1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-900 mt-1">Commission for direct referrals</p>
+              <p className="text-xs text-gray-900 mt-1">Commission on earnings for L1</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
-                Level 2 Commission (%)
+                Level 1 Deposit Commission (%)
+              </label>
+              <input
+                type="number"
+                value={referralL1Deposit}
+                onChange={(e) => setReferralL1Deposit(parseFloat(e.target.value))}
+                required
+                min="0"
+                max="100"
+                step="0.1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-900 mt-1">Commission on deposits for L1</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Level 2 Earnings Commission (%)
               </label>
               <input
                 type="number"
@@ -216,12 +237,12 @@ export default function AdminSettingsPage() {
                 step="0.1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-900 mt-1">Commission for 2nd level referrals</p>
+              <p className="text-xs text-gray-900 mt-1">Earnings commission only for L2</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
-                Level 3 Commission (%)
+                Level 3 Earnings Commission (%)
               </label>
               <input
                 type="number"
@@ -233,7 +254,7 @@ export default function AdminSettingsPage() {
                 step="0.1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-900 mt-1">Commission for 3rd level referrals</p>
+              <p className="text-xs text-gray-900 mt-1">Earnings commission only for L3</p>
             </div>
           </div>
 
@@ -466,9 +487,10 @@ export default function AdminSettingsPage() {
             <div>
               <h4 className="font-medium text-gray-900 mb-2">Referral Commissions</h4>
               <div className="text-sm space-y-1">
-                <div>Level 1: <span className="font-medium">{settings.referral_l1_percent}%</span></div>
-                <div>Level 2: <span className="font-medium">{settings.referral_l2_percent}%</span></div>
-                <div>Level 3: <span className="font-medium">{settings.referral_l3_percent}%</span></div>
+                <div>L1 Earnings: <span className="font-medium">{settings.referral_l1_percent}%</span></div>
+                <div>L1 Deposits: <span className="font-medium">{settings.referral_l1_deposit_percent || 5}%</span></div>
+                <div>L2 Earnings: <span className="font-medium">{settings.referral_l2_percent}%</span></div>
+                <div>L3 Earnings: <span className="font-medium">{settings.referral_l3_percent}%</span></div>
               </div>
             </div>
 

@@ -128,6 +128,35 @@ export default function HistoryPage() {
         })
       }
 
+      // Fetch referral commissions
+      const { data: commissions } = await supabase
+        .from('referral_commissions')
+        .select(`
+          id,
+          commission_amount,
+          level,
+          status,
+          created_at,
+          referred_user_id,
+          user_profiles!referred_user_id (full_name)
+        `)
+        .eq('referrer_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (commissions) {
+        commissions.forEach((commission: any) => {
+          allTransactions.push({
+            id: `commission-${commission.id}`,
+            type: 'commission',
+            amount: commission.commission_amount,
+            status: commission.status,
+            created_at: commission.created_at,
+            description: `Level ${commission.level} referral commission from ${commission.user_profiles?.full_name || 'User'}`,
+            reference: `COM-${commission.id}`
+          })
+        })
+      }
+
       // Sort by date (newest first)
       allTransactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       

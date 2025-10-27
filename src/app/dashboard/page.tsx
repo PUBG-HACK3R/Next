@@ -16,8 +16,6 @@ import {
   Wallet,
   Eye,
   EyeOff,
-  Bell,
-  User,
   Sparkles,
   DollarSign,
   Target,
@@ -36,6 +34,9 @@ interface Plan {
   max_investment: number
   capital_return: boolean
   status: string
+  purchase_limit_per_user: number | null
+  user_purchase_count?: number
+  can_purchase?: boolean
 }
 
 export default function DashboardHome() {
@@ -43,6 +44,7 @@ export default function DashboardHome() {
   const [loading, setLoading] = useState(true)
   const [userBalance, setUserBalance] = useState(0)
   const [balanceVisible, setBalanceVisible] = useState(true)
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,6 +59,7 @@ export default function DashboardHome() {
       }
       
       console.log('User profile:', profile)
+      setUser(user)
       setUserBalance(profile.balance || 0)
       
       // Fetch plans
@@ -73,9 +76,39 @@ export default function DashboardHome() {
         console.error('Error fetching plans:', error)
       }
 
-      if (data) {
+      if (data && user) {
         console.log('Setting plans:', data.length, 'plans found')
-        setPlans(data)
+        
+        // Check purchase limits for each plan
+        const plansWithLimits = await Promise.all(
+          data.map(async (plan: Plan) => {
+            if (plan.purchase_limit_per_user) {
+              // Count user's purchases for this plan
+              const { count } = await supabase
+                .from('investments')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', user.id)
+                .eq('plan_id', plan.id)
+              
+              const userPurchaseCount = count || 0
+              const canPurchase = userPurchaseCount < plan.purchase_limit_per_user
+              
+              return {
+                ...plan,
+                user_purchase_count: userPurchaseCount,
+                can_purchase: canPurchase
+              }
+            }
+            
+            return {
+              ...plan,
+              user_purchase_count: 0,
+              can_purchase: true
+            }
+          })
+        )
+        
+        setPlans(plansWithLimits)
       }
       setLoading(false)
     }
@@ -146,16 +179,6 @@ export default function DashboardHome() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <button className="relative p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/20 transition-colors duration-150">
-                <Bell className="w-5 h-5 text-white" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-              </button>
-              
-              <button className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/20 transition-colors duration-150">
-                <User className="w-5 h-5 text-white" />
-              </button>
-            </div>
           </div>
         </div>
 
@@ -185,15 +208,9 @@ export default function DashboardHome() {
                 {balanceVisible ? formatCurrency(userBalance) : '••••••'}
               </div>
               
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span className="text-white/60 text-sm">PKR Balance</span>
-                </div>
-                <div className="flex items-center space-x-1 text-green-400 text-sm">
-                  <TrendingUp className="w-3 h-3" />
-                  <span>+0.00%</span>
-                </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span className="text-white/60 text-sm">PKR Balance</span>
               </div>
             </div>
           </div>
@@ -260,7 +277,7 @@ export default function DashboardHome() {
               {plans.map((plan, index) => (
                 <div
                   key={plan.id}
-                  className="group relative overflow-hidden bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-200"
+                  className="group relative overflow-hidden bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10 hover:border-white/20 transition-all duration-200"
                 >
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -277,53 +294,67 @@ export default function DashboardHome() {
                   
                   <div className="relative">
                     {/* Plan Header */}
-                    <div className="flex justify-between items-start mb-6">
+                    <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h4 className="text-xl font-bold text-white mb-2">{plan.name}</h4>
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-2 px-3 py-1 bg-white/10 rounded-full">
-                            <Clock className="w-4 h-4 text-blue-300" />
-                            <span className="text-white text-sm">{plan.duration_days} days</span>
+                        <h4 className="text-lg font-bold text-white mb-1">{plan.name}</h4>
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-2 px-2 py-1 bg-white/10 rounded-full">
+                            <Clock className="w-3 h-3 text-blue-300" />
+                            <span className="text-white text-xs">{plan.duration_days} days</span>
                           </div>
-                          <div className="flex items-center space-x-2 px-3 py-1 bg-green-500/20 rounded-full">
-                            <TrendingUp className="w-4 h-4 text-green-400" />
-                            <span className="text-green-400 text-sm font-semibold">{plan.profit_percent}%</span>
+                          <div className="flex items-center space-x-2 px-2 py-1 bg-green-500/20 rounded-full">
+                            <TrendingUp className="w-3 h-3 text-green-400" />
+                            <span className="text-green-400 text-xs font-semibold">{plan.profit_percent}% Overall ROI</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right space-y-1">
                         <div>
-                          <div className="text-lg font-bold text-white">{formatCurrency(plan.min_investment)}</div>
                           <div className="text-slate-400 text-xs">Minimum</div>
+                          <div className="text-base font-bold text-white">{formatCurrency(plan.min_investment)}</div>
                         </div>
                         <div>
-                          <div className="text-lg font-bold text-green-400">{formatCurrency(plan.max_investment || 50000)}</div>
                           <div className="text-slate-400 text-xs">Maximum</div>
+                          <div className="text-base font-bold text-green-400">{formatCurrency(plan.max_investment || 50000)}</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Features */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="flex items-center space-x-2">
-                        <DollarSign className="w-3 h-3 text-green-400" />
-                        <span className="text-white/80 text-xs">Capital Return: {plan.capital_return ? 'Yes' : 'No'}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Zap className="w-3 h-3 text-yellow-400" />
-                        <span className="text-white/80 text-xs">Auto Compound</span>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <DollarSign className="w-3 h-3 text-green-400" />
+                          <span className="text-white/80 text-xs">Capital Return: {plan.capital_return ? 'Yes' : 'No'}</span>
+                        </div>
+                        {plan.purchase_limit_per_user && (
+                          <span className="text-white/60 text-xs">
+                            {plan.user_purchase_count || 0}/{plan.purchase_limit_per_user} purchases
+                          </span>
+                        )}
                       </div>
                     </div>
 
                     {/* Invest Button */}
-                    <Link href={`/dashboard/invest/${plan.id}`}>
-                      <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white text-center py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:from-blue-400 group-hover:to-purple-500">
-                        <div className="flex items-center justify-center space-x-2">
-                          <span>Start Investment</span>
-                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    {plan.can_purchase ? (
+                      <Link href={`/dashboard/invest/${plan.id}`}>
+                        <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white text-center py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:from-blue-400 group-hover:to-purple-500">
+                          <div className="flex items-center justify-center space-x-2">
+                            <span>Start Investment</span>
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="w-full bg-gray-400 text-white text-center py-3 rounded-xl font-semibold cursor-not-allowed">
+                        <div className="flex flex-col items-center space-y-1">
+                          <span className="text-sm">Purchase Limit Reached</span>
+                          <span className="text-xs opacity-80">
+                            {plan.user_purchase_count}/{plan.purchase_limit_per_user} purchases made
+                          </span>
                         </div>
                       </div>
-                    </Link>
+                    )}
                   </div>
                 </div>
               ))}

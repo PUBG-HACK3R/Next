@@ -24,6 +24,7 @@ interface Plan {
   max_investment: number
   capital_return: boolean
   status: string
+  purchase_limit_per_user: number | null
 }
 
 
@@ -46,6 +47,8 @@ export default function InvestPage() {
   const [investing, setInvesting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [canPurchase, setCanPurchase] = useState(true)
+  const [purchaseCount, setPurchaseCount] = useState(0)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,6 +81,23 @@ export default function InvestPage() {
       if (planData) {
         setPlan(planData)
         setAmount(planData.min_investment.toString())
+        
+        // Check purchase limit
+        if (planData.purchase_limit_per_user) {
+          const { count } = await supabase
+            .from('investments')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('plan_id', planId)
+          
+          const userPurchaseCount = count || 0
+          setPurchaseCount(userPurchaseCount)
+          
+          if (userPurchaseCount >= planData.purchase_limit_per_user) {
+            setCanPurchase(false)
+            setError(`You have reached the maximum purchase limit (${planData.purchase_limit_per_user} times) for this plan. Please choose another plan.`)
+          }
+        }
       }
 
       setLoading(false)
@@ -383,11 +403,17 @@ export default function InvestPage() {
 
           <button
             type="submit"
-            disabled={investing || !amount || parseFloat(amount) < plan.min_investment}
+            disabled={investing || !amount || parseFloat(amount) < plan.min_investment || !canPurchase}
             className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {investing ? 'Processing Investment...' : 'Invest Now'}
+            {!canPurchase ? 'Purchase Limit Reached' : (investing ? 'Processing Investment...' : 'Invest Now')}
           </button>
+          
+          {plan.purchase_limit_per_user && (
+            <div className="text-center text-sm text-gray-600">
+              Purchases: {purchaseCount}/{plan.purchase_limit_per_user}
+            </div>
+          )}
         </form>
       </div>
 

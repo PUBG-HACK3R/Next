@@ -27,7 +27,7 @@ interface UserProfile {
 
 interface Transaction {
   id: number
-  type: 'deposit' | 'withdrawal' | 'investment'
+  type: 'deposit' | 'withdrawal' | 'investment' | 'commission' | 'income'
   amount: number
   status: string
   created_at: string
@@ -151,6 +151,67 @@ export default function WalletPage() {
         })
       }
 
+      // Fetch recent commissions
+      const { data: commissions } = await supabase
+        .from('referral_commissions')
+        .select(`
+          id,
+          commission_amount,
+          level,
+          status,
+          created_at,
+          referred_user_id,
+          user_profiles!referred_user_id (full_name)
+        `)
+        .eq('referrer_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      // Fetch recent income transactions
+      const { data: incomeTransactions } = await supabase
+        .from('income_transactions')
+        .select(`
+          id,
+          amount,
+          days_collected,
+          is_final_collection,
+          status,
+          created_at,
+          investment_id,
+          investments!investment_id (
+            plans (name)
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      if (commissions) {
+        commissions.forEach((commission: any) => {
+          allTransactions.push({
+            id: commission.id,
+            type: 'commission',
+            amount: commission.commission_amount,
+            status: commission.status,
+            created_at: commission.created_at,
+            description: `Level ${commission.level} referral commission from ${commission.user_profiles?.full_name || 'User'}`
+          })
+        })
+      }
+
+      if (incomeTransactions) {
+        incomeTransactions.forEach((income: any) => {
+          allTransactions.push({
+            id: income.id,
+            type: 'income',
+            amount: income.amount,
+            status: income.status,
+            created_at: income.created_at,
+            description: `Daily income from ${income.investments?.plans?.name || 'Investment'} (${income.days_collected} day${income.days_collected > 1 ? 's' : ''})${income.is_final_collection ? ' - Final Collection' : ''}`
+          })
+        })
+      }
+
       // Sort by date
       allTransactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       setTransactions(allTransactions.slice(0, 10))
@@ -228,6 +289,8 @@ export default function WalletPage() {
       return <ArrowDownLeft className="w-4 h-4 text-green-600" />
     } else if (type === 'withdrawal') {
       return <ArrowUpRight className="w-4 h-4 text-red-600" />
+    } else if (type === 'income') {
+      return <TrendingUp className="w-4 h-4 text-green-600" />
     } else {
       return <TrendingUp className="w-4 h-4 text-blue-600" />
     }
@@ -257,7 +320,7 @@ export default function WalletPage() {
   return (
     <div className="p-4 space-y-6">
       {/* Header */}
-      <h1 className="text-2xl font-bold text-gray-900">My Wallet</h1>
+      <h1 className="text-2xl font-bold text-white">My Wallet</h1>
 
       {/* Balance Card */}
       <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
@@ -313,7 +376,7 @@ export default function WalletPage() {
       {/* Recent Transactions */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+          <h3 className="text-lg font-semibold text-white">Recent Transactions</h3>
           <Link
             href="/dashboard/history"
             className="text-green-600 hover:text-green-800 text-sm font-medium"
@@ -352,7 +415,7 @@ export default function WalletPage() {
                   </div>
                   <div className="text-right">
                     <p className={`font-semibold ${
-                      transaction.type === 'deposit' ? 'text-green-600' : 
+                      transaction.type === 'deposit' || transaction.type === 'income' ? 'text-green-600' : 
                       transaction.type === 'withdrawal' ? 'text-red-600' : 'text-blue-600'
                     }`}>
                       {transaction.type === 'withdrawal' ? '-' : '+'}
