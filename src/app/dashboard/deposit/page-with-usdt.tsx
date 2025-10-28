@@ -110,34 +110,6 @@ export default function DepositPage() {
     return usdtAmount * settings.usdt_to_pkr_rate
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        setError('File size must be less than 5MB')
-        return
-      }
-      if (!file.type.startsWith('image/')) {
-        setError('Please upload an image file')
-        return
-      }
-      setProofFile(file)
-      setError('')
-    }
-  }
-
-  const uploadProof = async (file: File, userId: string) => {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${userId}/${Date.now()}.${fileExt}`
-    
-    const { data, error } = await supabase.storage
-      .from('deposit_proofs')
-      .upload(fileName, file)
-
-    if (error) throw error
-    return data.path
-  }
-
   const handleTraditionalSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !settings) return

@@ -111,8 +111,12 @@ function SignupForm() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25 mr-4">
-                <Sparkles className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25 mr-4 border border-white/20">
+                <img 
+                  src="/logo.png" 
+                  alt="SmartGrow Mining Logo" 
+                  className="w-8 h-8 rounded-xl"
+                />
               </div>
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
             </div>

@@ -62,7 +62,7 @@ export default function WhatsAppSupport({
     return (
       <button
         onClick={handleWhatsAppClick}
-        className={`fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 ${baseClasses} ${className}`}
+        className={`fixed bottom-24 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 ${baseClasses} ${className}`}
         title="Contact Support on WhatsApp"
       >
         <MessageCircle size={24} />

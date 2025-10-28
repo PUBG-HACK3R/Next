@@ -557,13 +557,47 @@ export default function ProfilePage() {
         </h3>
         <div className="space-y-4 text-gray-600 text-sm leading-relaxed">
           <p>
-            Welcome to SmartGrow Mining Investments, a modern platform where technology meets opportunity.
-            We believe that cryptocurrency mining should not be limited to large corporations — every investor deserves a chance to benefit from this fast-growing digital industry.
+            🏆 <strong>SmartGrow Mining — The Future of Trusted Crypto Mining</strong>
+          </p>
+          <p>
+            Welcome to SmartGrow Mining, a genuine and transparent crypto mining and investment platform built to help you grow your digital wealth securely and efficiently.
+          </p>
+          <p>
+            We believe in real mining, real profits, and real trust.
+            At SmartGrow Mining, every process — from investment to profit withdrawal — is fully transparent, easy to track, and powered by cutting-edge blockchain technology.
           </p>
           
           <div>
-            <h4 className="font-semibold text-gray-900 mb-2">Our Mission</h4>
-            <p>We mine digital assets using advanced mining machines, and share the real profits with our investors.</p>
+            <h4 className="font-semibold text-gray-900 mb-2">⚙️ What We Do</h4>
+            <p>We run a network of high-performance crypto mining machines and ASIC rigs that operate 24/7 to mine top cryptocurrencies such as Bitcoin, Ethereum, and Litecoin.</p>
+            <p>Our mining farms are equipped with advanced cooling systems and real-time monitoring tools, ensuring maximum uptime and consistent profit generation for all investors.</p>
+            <p>Every investor at SmartGrow Mining earns a daily income based on their chosen investment plan. The system automatically calculates your profit, updates your dashboard, and allows you to withdraw your earnings securely anytime you wish.</p>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-2">💠 Our Vision</h4>
+            <p>Our vision is to make crypto mining accessible to everyone, not just tech experts. We aim to create a reliable, global platform where anyone can start earning from crypto mining with minimal effort and complete peace of mind.</p>
+            <p>We believe in honesty, growth, and innovation — and these are the values that drive SmartGrow Mining forward.</p>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-2">💎 Why Choose SmartGrow Mining?</h4>
+            <ul className="space-y-1">
+              <li>• <strong>100% Genuine & Verified Mining Setup</strong></li>
+              <li>• <strong>Guaranteed Daily Profit Based on Plan</strong></li>
+              <li>• <strong>Transparent and User-Friendly Dashboard</strong></li>
+              <li>• <strong>Secure Withdrawals with Instant Processing</strong></li>
+              <li>• <strong>Real-Time Profit Tracking & Notifications</strong></li>
+              <li>• <strong>24/7 Professional Support Team</strong></li>
+              <li>• <strong>No Hidden Fees or Fake Promises</strong></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-2">💰 Your Investment, Our Responsibility</h4>
+            <p>When you invest with SmartGrow Mining, you're joining a platform built on trust and technology. Your capital is used to power our real mining infrastructure, and your profits are distributed fairly according to your selected plan.</p>
+            <p>We're not just another investment site — we're a real mining ecosystem, designed for long-term sustainability and genuine investor success.</p>
+            <p className="font-medium text-green-700">Join SmartGrow Mining today and start earning from the power of crypto mining — safely, transparently, and profitably.</p>
           </div>
 
           {showFullAbout && (

@@ -333,15 +333,15 @@ export default function WalletPage() {
             href="/dashboard/deposit"
             className="flex items-center space-x-2 bg-white bg-opacity-20 px-4 py-2 rounded-md hover:bg-opacity-30 transition-colors text-black !important"
           >
-            <Plus size={16} className="text-black !important" />
             <span className="text-black !important">Deposit</span>
+            <Plus size={16} className="text-black !important" />
           </Link>
           <Link
             href="/dashboard/withdraw"
             className="flex items-center space-x-2 bg-white bg-opacity-20 px-4 py-2 rounded-md hover:bg-opacity-30 transition-colors text-black !important"
           >
-            <Minus size={16} className="text-black !important" />
             <span className="text-black !important">Withdraw</span>
+            <Minus size={16} className="text-black !important" />
           </Link>
         </div>
       </div>
@@ -415,10 +415,11 @@ export default function WalletPage() {
                   </div>
                   <div className="text-right">
                     <p className={`font-semibold ${
-                      transaction.type === 'deposit' || transaction.type === 'income' ? 'text-green-600' : 
-                      transaction.type === 'withdrawal' ? 'text-red-600' : 'text-blue-600'
+                      transaction.type === 'deposit' || transaction.type === 'income' || transaction.type === 'commission' ? 'text-green-600' : 
+                      transaction.type === 'withdrawal' ? 'text-red-600' : 
+                      transaction.type === 'investment' ? 'text-gray-600' : 'text-blue-600'
                     }`}>
-                      {transaction.type === 'withdrawal' ? '-' : '+'}
+                      {transaction.type === 'withdrawal' ? '-' : transaction.type === 'investment' ? '' : '+'}
                       {formatCurrency(transaction.amount)}
                     </p>
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(transaction.status)}`}>

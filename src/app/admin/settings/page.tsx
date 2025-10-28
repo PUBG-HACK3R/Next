@@ -23,6 +23,10 @@ interface AdminSettings {
   max_investment_amount: number
   whatsapp_support_number: string | null
   whatsapp_group_link: string | null
+  usdt_wallet_address: string
+  min_usdt_deposit: number
+  usdt_to_pkr_rate: number
+  usdt_chains: Array<{name: string, network: string, enabled: boolean}>
   deposit_details: {
     bank: {
       name: string
@@ -32,6 +36,12 @@ interface AdminSettings {
     easypaisa: {
       number: string
       title: string
+    }
+    usdt?: {
+      wallet_address: string
+      chains: Array<{name: string, network: string, enabled: boolean}>
+      min_deposit: number
+      rate_pkr: number
     }
   }
 }
@@ -59,6 +69,16 @@ export default function AdminSettingsPage() {
   const [bankTitle, setBankTitle] = useState('')
   const [easypaisaNumber, setEasypaisaNumber] = useState('')
   const [easypaisaTitle, setEasypaisaTitle] = useState('')
+  
+  // USDT settings
+  const [usdtWalletAddress, setUsdtWalletAddress] = useState('')
+  const [minUsdtDeposit, setMinUsdtDeposit] = useState(10)
+  const [usdtToPkrRate, setUsdtToPkrRate] = useState(280)
+  const [usdtChains, setUsdtChains] = useState([
+    {name: 'TRC20', network: 'Tron', enabled: true},
+    {name: 'BEP20', network: 'BSC', enabled: true},
+    {name: 'Arbitrum', network: 'Arbitrum One', enabled: true}
+  ])
 
   useEffect(() => {
     fetchSettings()
@@ -91,6 +111,14 @@ export default function AdminSettingsPage() {
         setBankTitle(data.deposit_details.bank.title)
         setEasypaisaNumber(data.deposit_details.easypaisa.number)
         setEasypaisaTitle(data.deposit_details.easypaisa.title)
+        
+        // USDT settings
+        setUsdtWalletAddress(data.usdt_wallet_address || '')
+        setMinUsdtDeposit(data.min_usdt_deposit || 10)
+        setUsdtToPkrRate(data.usdt_to_pkr_rate || 280)
+        if (data.usdt_chains) {
+          setUsdtChains(data.usdt_chains)
+        }
       }
     } catch (error: any) {
       console.error('Error fetching settings:', error)
@@ -117,6 +145,10 @@ export default function AdminSettingsPage() {
         max_investment_amount: maxInvestmentAmount,
         whatsapp_support_number: whatsappNumber || null,
         whatsapp_group_link: whatsappGroupLink || null,
+        usdt_wallet_address: usdtWalletAddress,
+        min_usdt_deposit: minUsdtDeposit,
+        usdt_to_pkr_rate: usdtToPkrRate,
+        usdt_chains: usdtChains,
         deposit_details: {
           bank: {
             name: bankName,
@@ -126,6 +158,12 @@ export default function AdminSettingsPage() {
           easypaisa: {
             number: easypaisaNumber,
             title: easypaisaTitle
+          },
+          usdt: {
+            wallet_address: usdtWalletAddress,
+            chains: usdtChains,
+            min_deposit: minUsdtDeposit,
+            rate_pkr: usdtToPkrRate
           }
         }
       }
@@ -450,6 +488,91 @@ export default function AdminSettingsPage() {
             </div>
           </div>
 
+        </div>
+
+        {/* USDT Configuration */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">USDT Cryptocurrency Settings</h3>
+          
+          <div className="space-y-6">
+            {/* USDT Wallet Address */}
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                USDT Wallet Address
+              </label>
+              <input
+                type="text"
+                value={usdtWalletAddress}
+                onChange={(e) => setUsdtWalletAddress(e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., TXYZabc123..."
+              />
+            </div>
+
+            {/* USDT Settings Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Minimum USDT Deposit
+                </label>
+                <input
+                  type="number"
+                  value={minUsdtDeposit}
+                  onChange={(e) => setMinUsdtDeposit(parseFloat(e.target.value))}
+                  required
+                  min="1"
+                  step="0.1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="10"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  USDT to PKR Rate
+                </label>
+                <input
+                  type="number"
+                  value={usdtToPkrRate}
+                  onChange={(e) => setUsdtToPkrRate(parseFloat(e.target.value))}
+                  required
+                  min="1"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="280"
+                />
+              </div>
+            </div>
+
+            {/* Supported Chains */}
+            <div>
+              <h4 className="font-medium text-gray-900 mb-3">Supported Blockchain Networks</h4>
+              <div className="space-y-3">
+                {usdtChains.map((chain, index) => (
+                  <div key={chain.name} className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+                    <div>
+                      <span className="font-medium text-gray-900">{chain.name}</span>
+                      <span className="text-sm text-gray-500 ml-2">({chain.network})</span>
+                    </div>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={chain.enabled}
+                        onChange={(e) => {
+                          const newChains = [...usdtChains]
+                          newChains[index].enabled = e.target.checked
+                          setUsdtChains(newChains)
+                        }}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Enabled</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Messages */}

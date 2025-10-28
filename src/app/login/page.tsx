@@ -57,8 +57,12 @@ export default function LoginPage() {
           {/* Logo */}
           <div className="flex items-center mb-8">
             <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 mr-4">
-                <Sparkles className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 mr-4 border border-white/20">
+                <img 
+                  src="/logo.png" 
+                  alt="SmartGrow Mining Logo" 
+                  className="w-8 h-8 rounded-xl"
+                />
               </div>
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
             </div>
@@ -132,11 +136,15 @@ export default function LoginPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
             <motion.div 
-              className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg shadow-blue-500/25"
+              className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-4 shadow-lg shadow-blue-500/25 border border-white/20"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              <Sparkles className="w-8 h-8 text-white" />
+              <img 
+                src="/logo.png" 
+                alt="SmartGrow Mining Logo" 
+                className="w-10 h-10 rounded-xl"
+              />
             </motion.div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
               SmartGrow Mining

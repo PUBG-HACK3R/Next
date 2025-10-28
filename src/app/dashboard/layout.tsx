@@ -63,7 +63,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Modern Top Bar */}
-      <header className="bg-white/5 backdrop-blur-xl border-b border-white/10 sticky top-0 z-40">
+      <header className="bg-blue-900 border-b-2 border-blue-400 sticky top-0 z-40" style={{boxShadow: '0 2px 20px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)'}}>
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -82,7 +82,7 @@ export default function DashboardLayout({
       </main>
 
       {/* Modern Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/5 backdrop-blur-xl border-t border-white/10 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-blue-900 border-t-2 border-blue-400 z-50" style={{boxShadow: '0 -2px 20px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)'}}>
         <div className="grid grid-cols-4 h-16">
           {navItems.map(({ href, icon: Icon, label }) => {
             const isActive = pathname === href

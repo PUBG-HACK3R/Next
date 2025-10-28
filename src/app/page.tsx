@@ -25,8 +25,12 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
       <div className="text-center">
         <div className="relative mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto shadow-lg shadow-blue-500/25 mb-6">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/30 border-t-white"></div>
+          <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto shadow-lg shadow-blue-500/25 mb-6 border border-white/20">
+            <img 
+              src="/logo.png" 
+              alt="SmartGrow Mining Logo" 
+              className="w-12 h-12 rounded-2xl"
+            />
           </div>
           <div className="absolute inset-0 bg-blue-500/20 rounded-3xl animate-pulse blur-xl"></div>
         </div>
