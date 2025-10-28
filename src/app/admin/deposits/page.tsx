@@ -7,16 +7,17 @@ import { Check, X, Eye, Calendar, User, CreditCard } from 'lucide-react'
 interface Deposit {
   id: number
   user_id: string
-  amount: number
+  deposit_type: string
+  amount_pkr: number
   sender_name: string
-  sender_last_4_digits: string
+  sender_account_last4: string
+  amount_usdt?: number
+  chain_name?: string
+  transaction_hash?: string
   proof_url: string | null
   status: string
   rejection_reason: string | null
   created_at: string
-  user_profiles: {
-    full_name: string
-  }
 }
 
 export default function AdminDepositsPage() {
@@ -27,224 +28,154 @@ export default function AdminDepositsPage() {
   const [rejectionReason, setRejectionReason] = useState('')
   const [showRejectModal, setShowRejectModal] = useState<number | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [dateFilter, setDateFilter] = useState<string>('all')
 
   useEffect(() => {
     fetchDeposits()
-  }, [statusFilter, dateFilter])
+  }, [statusFilter])
 
   const fetchDeposits = async () => {
-    let query = supabase
-      .from('deposits')
-      .select(`
-        *,
-        user_profiles (
-          full_name
-        )
-      `)
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      query = query.eq('status', statusFilter)
-    }
-
-    // Apply date filter
-    if (dateFilter !== 'all') {
-      const now = new Date()
-      let startDate: Date
+    try {
+      setLoading(true)
+      // Use the working admin API
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = {}
       
-      switch (dateFilter) {
-        case 'today':
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-          break
-        case 'week':
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-          break
-        case 'month':
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-          break
-        default:
-          startDate = new Date(0)
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
+      let url = '/api/admin/deposits?page=1&limit=100'
+      if (statusFilter !== 'all') {
+        url += `&status=${statusFilter}`
+      }
+
+      const response = await fetch(url, { headers })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setDeposits(data.deposits || [])
+      } else {
+        console.error('Failed to fetch admin deposits')
+      }
+    } catch (error) {
+      console.error('Error fetching admin deposits:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const approveDeposit = async (depositId: number, amount: number, userId: string) => {
+    setProcessingId(depositId)
+    try {
+      const response = await fetch('/api/admin/deposits', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deposit_id: depositId,
+          action: 'approve'
+        })
+      })
+
+      if (response.ok) {
+        setDeposits(deposits.map(d => 
+          d.id === depositId ? { ...d, status: 'approved' } : d
+        ))
+      }
+    } catch (error) {
+      console.error('Error approving deposit:', error)
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  const rejectDeposit = async (depositId: number) => {
+    setProcessingId(depositId)
+    try {
+      const response = await fetch('/api/admin/deposits', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deposit_id: depositId,
+          action: 'reject',
+          rejection_reason: rejectionReason
+        })
+      })
+
+      if (response.ok) {
+        setDeposits(deposits.map(d => 
+          d.id === depositId ? { ...d, status: 'rejected', rejection_reason: rejectionReason } : d
+        ))
+        setShowRejectModal(null)
+        setRejectionReason('')
+      }
+    } catch (error) {
+      console.error('Error rejecting deposit:', error)
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  const viewProof = async (url: string) => {
+    if (!url) return
+    
+    try {
+      // If it's already a full URL (http/https), use it directly
+      if (url.startsWith('http')) {
+        setSelectedProof(url)
+        return
       }
       
-      query = query.gte('created_at', startDate.toISOString())
+      // Otherwise, get signed URL from Supabase Storage
+      const { data } = await supabase.storage
+        .from('deposit_proofs')
+        .createSignedUrl(url, 3600) // 1 hour expiry
+
+      if (data?.signedUrl) {
+        setSelectedProof(data.signedUrl)
+      } else {
+        console.error('Failed to get signed URL for proof')
+        alert('Failed to load proof image')
+      }
+    } catch (error) {
+      console.error('Error loading proof:', error)
+      alert('Failed to load proof image')
     }
-
-    query = query.order('created_at', { ascending: false })
-
-    const { data, error } = await query
-
-    if (data) {
-      setDeposits(data)
-    }
-    setLoading(false)
   }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PK', {
       style: 'currency',
       currency: 'PKR',
-      minimumFractionDigits: 2,
+      minimumFractionDigits: 0
     }).format(amount)
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-PK', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit',
+      minute: '2-digit'
     })
   }
 
-  const approveDeposit = async (depositId: number, amount: number, userId: string) => {
-    setProcessingId(depositId)
-    
-    try {
-      // Start a transaction-like operation
-      // First, update the deposit status
-      const { error: depositError } = await supabase
-        .from('deposits')
-        .update({ status: 'approved' })
-        .eq('id', depositId)
-
-      if (depositError) throw depositError
-
-      // Then, update the user's balance
-      const { error: balanceError } = await supabase.rpc('increment_user_balance', {
-        user_id: userId,
-        amount: amount
-      })
-
-      if (balanceError) {
-        // If balance update fails, revert deposit status
-        await supabase
-          .from('deposits')
-          .update({ status: 'pending' })
-          .eq('id', depositId)
-        throw balanceError
-      }
-
-      // Process referral commissions (3-level system)
-      const { error: commissionError } = await supabase.rpc('process_referral_commissions', {
-        deposit_user_id: userId,
-        deposit_amount: amount
-      })
-
-      if (commissionError) {
-        console.error('Error processing referral commissions:', commissionError)
-        // Don't revert the deposit approval, just log the error
-      }
-
-      // Remove from pending list
-      setDeposits(deposits.filter(d => d.id !== depositId))
-      
-    } catch (error: any) {
-      console.error('Error approving deposit:', error)
-      alert('Failed to approve deposit: ' + error.message)
-    }
-    
-    setProcessingId(null)
-  }
-
-  const rejectDeposit = async (depositId: number) => {
-    if (!rejectionReason.trim()) {
-      alert('Please provide a rejection reason')
-      return
-    }
-
-    setProcessingId(depositId)
-    
-    try {
-      const { error } = await supabase
-        .from('deposits')
-        .update({ 
-          status: 'rejected',
-          rejection_reason: rejectionReason
-        })
-        .eq('id', depositId)
-
-      if (error) throw error
-
-      // Remove from pending list
-      setDeposits(deposits.filter(d => d.id !== depositId))
-      setShowRejectModal(null)
-      setRejectionReason('')
-      
-    } catch (error: any) {
-      console.error('Error rejecting deposit:', error)
-      alert('Failed to reject deposit: ' + error.message)
-    }
-    
-    setProcessingId(null)
-  }
-
-  const viewProof = async (proofUrl: string) => {
-    if (!proofUrl) return
-    
-    const { data } = await supabase.storage
-      .from('deposit_proofs')
-      .createSignedUrl(proofUrl, 3600) // 1 hour expiry
-
-    if (data?.signedUrl) {
-      setSelectedProof(data.signedUrl)
-    }
-  }
-
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status) {
       case 'approved':
         return 'bg-green-100 text-green-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
       case 'rejected':
         return 'bg-red-100 text-red-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-yellow-100 text-yellow-800'
     }
-  }
-
-  const getStatusCount = (status: string) => {
-    return deposits.filter(d => d.status === status).length
   }
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">Manage Deposits</h1>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Status:</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All ({deposits.length})</option>
-                <option value="pending">Pending ({getStatusCount('pending')})</option>
-                <option value="approved">Approved ({getStatusCount('approved')})</option>
-                <option value="rejected">Rejected ({getStatusCount('rejected')})</option>
-              </select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Period:</label>
-              <select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">Last 7 Days</option>
-                <option value="month">This Month</option>
-              </select>
-            </div>
-          </div>
-        </div>
+      <div className="p-6">
         <div className="animate-pulse space-y-4">
-          {[1, 2, 3].map((i) => (
+          {[...Array(5)].map((_, i) => (
             <div key={i} className="bg-white rounded-lg p-6 shadow-sm">
               <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
               <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -256,44 +187,36 @@ export default function AdminDepositsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Manage Deposits</h1>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Status:</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All ({deposits.length})</option>
-              <option value="pending">Pending ({getStatusCount('pending')})</option>
-              <option value="approved">Approved ({getStatusCount('approved')})</option>
-              <option value="rejected">Rejected ({getStatusCount('rejected')})</option>
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Period:</label>
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="week">Last 7 Days</option>
-              <option value="month">This Month</option>
-            </select>
-          </div>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Deposit Management</h1>
+        
+        <div className="flex space-x-4">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          
+          <button
+            onClick={fetchDeposits}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Refresh
+          </button>
         </div>
       </div>
 
       {deposits.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-          <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Deposits</h3>
-          <p className="text-gray-700">All deposit requests have been processed.</p>
+        <div className="text-center py-12">
+          <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500 mb-2">No deposits found</p>
+          <p className="text-gray-400 text-sm">Deposit requests will appear here for review</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -306,20 +229,23 @@ export default function AdminDepositsPage() {
                     <div className="flex items-center space-x-2 mb-1">
                       <User size={16} className="text-gray-700" />
                       <span className="font-medium text-gray-900">
-                        {deposit.user_profiles?.full_name || 'Unknown User'}
+                        User ID: {deposit.user_id.slice(0, 8)}...
                       </span>
                     </div>
-                    <p className="text-sm text-gray-700">User ID: {deposit.user_id.slice(0, 8)}...</p>
+                    <p className="text-sm text-gray-700">Deposit #{deposit.id}</p>
                   </div>
 
                   {/* Amount & Payment Info */}
                   <div>
                     <div className="text-lg font-bold text-green-600 mb-1">
-                      {formatCurrency(deposit.amount)}
+                      {formatCurrency(deposit.amount_pkr)}
                     </div>
                     <div className="text-sm text-gray-800">
-                      <p>From: {deposit.sender_name}</p>
-                      <p>Account: ****{deposit.sender_last_4_digits}</p>
+                      <p>Type: {deposit.deposit_type.toUpperCase()}</p>
+                      {deposit.sender_name && <p>From: {deposit.sender_name}</p>}
+                      {deposit.sender_account_last4 && <p>Account: ****{deposit.sender_account_last4}</p>}
+                      {deposit.amount_usdt && <p>USDT: {deposit.amount_usdt}</p>}
+                      {deposit.chain_name && <p>Chain: {deposit.chain_name}</p>}
                     </div>
                   </div>
 
@@ -352,7 +278,7 @@ export default function AdminDepositsPage() {
                     {deposit.status === 'pending' && (
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => approveDeposit(deposit.id, deposit.amount, deposit.user_id)}
+                          onClick={() => approveDeposit(deposit.id, deposit.amount_pkr, deposit.user_id)}
                           disabled={processingId === deposit.id}
                           className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50 flex items-center space-x-1"
                         >
@@ -369,75 +295,71 @@ export default function AdminDepositsPage() {
                         </button>
                       </div>
                     )}
-                    {deposit.status === 'rejected' && deposit.rejection_reason && (
-                      <span className="text-xs text-red-600" title={deposit.rejection_reason}>
-                        Reason: {deposit.rejection_reason.length > 20 ? deposit.rejection_reason.substring(0, 20) + '...' : deposit.rejection_reason}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>
+
+              {deposit.rejection_reason && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+                  <p className="text-sm text-red-800">
+                    <strong>Rejection Reason:</strong> {deposit.rejection_reason}
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
-      {/* Proof Modal */}
-      {selectedProof && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4">
-          <div className="bg-white rounded-lg max-w-2xl max-h-full overflow-auto">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Payment Proof</h3>
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Reject Deposit</h3>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="Enter rejection reason..."
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={4}
+            />
+            <div className="flex justify-end space-x-3 mt-4">
               <button
-                onClick={() => setSelectedProof(null)}
-                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setShowRejectModal(null)}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                <X size={24} />
+                Cancel
               </button>
-            </div>
-            <div className="p-4">
-              <img
-                src={selectedProof}
-                alt="Payment Proof"
-                className="max-w-full h-auto rounded-lg"
-              />
+              <button
+                onClick={() => rejectDeposit(showRejectModal)}
+                disabled={!rejectionReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+              >
+                Reject Deposit
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Reject Modal */}
-      {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Reject Deposit</h3>
-              <textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Enter rejection reason..."
-                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                rows={4}
-              />
-              <div className="flex space-x-3 mt-4">
-                <button
-                  onClick={() => rejectDeposit(showRejectModal)}
-                  disabled={!rejectionReason.trim() || processingId === showRejectModal}
-                  className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {processingId === showRejectModal ? 'Processing...' : 'Confirm Rejection'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowRejectModal(null)
-                    setRejectionReason('')
-                  }}
-                  className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
+      {/* Proof Modal */}
+      {selectedProof && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl max-h-[80vh] overflow-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Deposit Proof</h3>
+              <button
+                onClick={() => setSelectedProof(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
             </div>
+            <img
+              src={selectedProof}
+              alt="Deposit Proof"
+              className="max-w-full h-auto rounded-lg"
+            />
           </div>
         </div>
       )}

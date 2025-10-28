@@ -36,8 +36,16 @@ interface Investment {
   }
 }
 
+interface UserProfile {
+  id: string
+  full_name: string
+  balance: number
+  earned_balance: number
+}
+
 export default function MyInvestmentsPage() {
   const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [investments, setInvestments] = useState<Investment[]>([])
   const [loading, setLoading] = useState(true)
   const [collectingIncome, setCollectingIncome] = useState<number | null>(null)
@@ -49,6 +57,21 @@ export default function MyInvestmentsPage() {
   })
   const router = useRouter()
 
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, balance, earned_balance')
+        .eq('id', userId)
+        .single()
+
+      if (error) throw error
+      setProfile(data)
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       const { user } = await getCurrentUser()
@@ -59,6 +82,7 @@ export default function MyInvestmentsPage() {
       setUser(user)
 
       await fetchInvestments(user.id)
+      await fetchProfile(user.id)
       setLoading(false)
     }
 
@@ -135,8 +159,9 @@ export default function MyInvestmentsPage() {
       if (error) throw error
 
       if (data.success) {
-        // Refresh investments data
+        // Refresh investments and profile data
         await fetchInvestments(user.id)
+        await fetchProfile(user.id)
         
         // Show success message
         alert(`Success! Collected ${formatCurrency(data.profit_earned)} for ${data.days_collected} day(s)${data.is_final_collection ? '. Investment completed!' : ''}`)
@@ -154,14 +179,20 @@ export default function MyInvestmentsPage() {
   const calculateAvailableDays = (investment: Investment) => {
     const now = new Date()
     const startDate = new Date(investment.start_date)
-    const lastCollection = investment.last_income_collection_date 
-      ? new Date(investment.last_income_collection_date) 
-      : new Date(startDate.getTime() - 24 * 60 * 60 * 1000) // Day before start if never collected
-    
-    const daysSinceLastCollection = Math.floor((now.getTime() - lastCollection.getTime()) / (24 * 60 * 60 * 1000))
     const remainingDays = investment.plans.duration_days - investment.total_days_collected
     
-    return Math.min(daysSinceLastCollection, remainingDays)
+    let daysSinceReference: number
+    
+    if (investment.last_income_collection_date) {
+      // Subsequent collections: 24 hours from last collection
+      const lastCollection = new Date(investment.last_income_collection_date)
+      daysSinceReference = Math.floor((now.getTime() - lastCollection.getTime()) / (24 * 60 * 60 * 1000))
+    } else {
+      // First collection: 24 hours from investment start
+      daysSinceReference = Math.floor((now.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000))
+    }
+    
+    return Math.min(daysSinceReference, remainingDays)
   }
 
   const canCollectToday = (investment: Investment) => {
@@ -258,7 +289,7 @@ export default function MyInvestmentsPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center space-x-2 mb-2">
             <DollarSign className="w-5 h-5 text-blue-600" />
@@ -289,6 +320,15 @@ export default function MyInvestmentsPage() {
             <span className="text-sm text-gray-600">Total Earnings</span>
           </div>
           <p className="text-lg font-bold text-gray-900">{formatCurrency(stats.totalEarnings)}</p>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center space-x-2 mb-2">
+            <Clock className="w-5 h-5 text-orange-600" />
+            <span className="text-sm text-gray-600">Locked Earnings</span>
+          </div>
+          <p className="text-lg font-bold text-gray-900">{formatCurrency(profile?.earned_balance || 0)}</p>
+          <p className="text-xs text-gray-500 mt-1">Available on completion</p>
         </div>
       </div>
 

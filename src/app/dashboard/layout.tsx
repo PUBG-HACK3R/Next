@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { getCurrentUser, signOut } from '@/lib/auth'
-import { Home, TrendingUp, Wallet, User, LogOut } from 'lucide-react'
+import { Home, TrendingUp, Wallet, User, Users, LogOut } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
 
 
@@ -15,6 +15,7 @@ export default function DashboardLayout({
 }) {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [forceUpdate, setForceUpdate] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -29,6 +30,8 @@ export default function DashboardLayout({
 
       setUser(user)
       setLoading(false)
+      // Force update to ensure navigation renders correctly
+      setForceUpdate(prev => prev + 1)
     }
 
     checkAuth()
@@ -39,12 +42,31 @@ export default function DashboardLayout({
     router.push('/login')
   }
 
-  const navItems = [
-    { href: '/dashboard', icon: Home, label: 'Home' },
-    { href: '/dashboard/my-investments', icon: TrendingUp, label: 'Active Plan' },
-    { href: '/dashboard/wallet', icon: Wallet, label: 'Wallet' },
-    { href: '/dashboard/profile', icon: User, label: 'Profile' },
-  ]
+  // Navigation items with referral program and profile
+  const navItems = React.useMemo(() => [
+    { 
+      href: '/dashboard', 
+      icon: Home, 
+      label: 'Home' 
+    },
+    { 
+      href: '/dashboard/my-investments', 
+      icon: TrendingUp, 
+      label: 'Active Plan' 
+    },
+    { 
+      href: '/dashboard/invite', 
+      icon: Users, 
+      label: 'Referral Program'  // Referral program page
+    },
+    { 
+      href: '/dashboard/profile', 
+      icon: User, 
+      label: 'Profile'    // Profile page
+    }
+  ], [])
+
+  console.log('Navigation items (render #' + forceUpdate + '):', navItems)
 
   if (loading) {
     return (
@@ -81,14 +103,14 @@ export default function DashboardLayout({
         {children}
       </main>
 
-      {/* Modern Bottom Navigation */}
+      {/* Modern Bottom Navigation - Updated */}
       <nav className="fixed bottom-0 left-0 right-0 bg-blue-900 border-t-2 border-blue-400 z-50" style={{boxShadow: '0 -2px 20px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)'}}>
         <div className="grid grid-cols-4 h-16">
-          {navItems.map(({ href, icon: Icon, label }) => {
+          {navItems.map(({ href, icon: Icon, label }, index) => {
             const isActive = pathname === href
             return (
               <Link
-                key={href}
+                key={`${href}-${index}-${forceUpdate}`}
                 href={href}
                 className={`flex flex-col items-center justify-center space-y-1 transition-all duration-200 ${
                   isActive
@@ -97,7 +119,7 @@ export default function DashboardLayout({
                 }`}
               >
                 <Icon size={20} />
-                <span className="text-xs font-medium">{label}</span>
+                <span className="text-xs font-medium">{label} {/* Updated */}</span>
               </Link>
             )
           })}

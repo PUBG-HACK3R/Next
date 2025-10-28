@@ -293,13 +293,13 @@ export default function InvitePage() {
       // Get total deposits - try different status values
       const { data: deposits } = await supabase
         .from('deposits')
-        .select('amount, status')
+        .select('amount_pkr, status')
         .eq('user_id', userId)
       
       const totalDeposits = deposits?.reduce((sum, d) => {
         // Include completed, approved, and successful deposits
         if (['Completed', 'completed', 'Approved', 'approved', 'Success', 'success'].includes(d.status)) {
-          return sum + d.amount
+          return sum + d.amount_pkr
         }
         return sum
       }, 0) || 0

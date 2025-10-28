@@ -23,6 +23,8 @@ interface UsdtDeposit {
 }
 
 export default function AdminUsdtDepositsPage() {
+  console.log('AdminUsdtDepositsPage component initialized')
+  
   const [deposits, setDeposits] = useState<UsdtDeposit[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<number | null>(null)
@@ -37,6 +39,10 @@ export default function AdminUsdtDepositsPage() {
   }, [statusFilter, dateFilter])
 
   const fetchDeposits = async () => {
+    console.log('=== ADMIN USDT DEPOSITS FETCH START ===')
+    console.log('Status filter:', statusFilter)
+    console.log('Date filter:', dateFilter)
+    
     let query = supabase
       .from('usdt_deposits')
       .select(`
@@ -45,6 +51,8 @@ export default function AdminUsdtDepositsPage() {
           full_name
         )
       `)
+    
+    console.log('Initial query created')
 
     // Apply status filter
     if (statusFilter !== 'all') {
@@ -77,10 +85,27 @@ export default function AdminUsdtDepositsPage() {
 
     const { data, error } = await query
 
-    if (data) {
-      setDeposits(data)
+    if (error) {
+      console.error('Admin USDT Deposits Error:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        fullError: error
+      })
     }
+
+    if (data) {
+      console.log('Admin USDT Deposits Data:', data)
+      console.log('Number of deposits found:', data.length)
+      setDeposits(data)
+    } else {
+      console.log('No USDT deposits data received')
+    }
+    
+    console.log('Setting loading to false')
     setLoading(false)
+    console.log('=== ADMIN USDT DEPOSITS FETCH END ===')
   }
 
   const formatCurrency = (amount: number, currency: string = 'PKR') => {
@@ -169,12 +194,26 @@ export default function AdminUsdtDepositsPage() {
   }
 
   const viewProof = async (proofUrl: string) => {
-    const { data } = await supabase.storage
+    // Check if this is a temporary proof URL
+    if (proofUrl.startsWith('temp_proof_')) {
+      alert('This is a temporary proof URL. The actual file was not uploaded due to storage configuration issues. Please ask the user to re-submit with proper file upload.')
+      return
+    }
+
+    const { data, error } = await supabase.storage
       .from('deposit_proofs')
       .createSignedUrl(proofUrl, 3600) // 1 hour expiry
 
+    if (error) {
+      console.error('Error creating signed URL:', error)
+      alert('Failed to load proof image: ' + error.message)
+      return
+    }
+
     if (data?.signedUrl) {
       setSelectedProof(data.signedUrl)
+    } else {
+      alert('Failed to generate proof URL')
     }
   }
 
@@ -324,8 +363,8 @@ export default function AdminUsdtDepositsPage() {
                     </div>
                     <div className="text-sm text-gray-700">
                       <strong>Hash:</strong> 
-                      <span className="font-mono text-xs ml-1">
-                        {deposit.transaction_hash.substring(0, 10)}...
+                      <span className="font-mono text-xs ml-1 break-all">
+                        {deposit.transaction_hash}
                       </span>
                     </div>
                     {deposit.proof_url && (

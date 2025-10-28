@@ -138,9 +138,9 @@ export default function DashboardHome() {
       color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
-      href: '/dashboard/invite',
-      icon: Users,
-      label: 'Invite',
+      href: '/dashboard/wallet',
+      icon: Wallet,
+      label: 'Wallet',
       color: 'bg-purple-500 hover:bg-purple-600',
     },
     {
@@ -220,7 +220,7 @@ export default function DashboardHome() {
             {[
               { href: '/dashboard/deposit', icon: Plus, label: 'Deposit', color: 'from-green-500 to-emerald-600', shadow: 'shadow-green-500/25' },
               { href: '/dashboard/withdraw', icon: Minus, label: 'Withdraw', color: 'from-orange-500 to-red-500', shadow: 'shadow-orange-500/25' },
-              { href: '/dashboard/invite', icon: Users, label: 'Invite', color: 'from-purple-500 to-pink-500', shadow: 'shadow-purple-500/25' },
+              { href: '/dashboard/wallet', icon: Wallet, label: 'Wallet', color: 'from-purple-500 to-pink-500', shadow: 'shadow-purple-500/25' },
               { href: '/dashboard/history', icon: History, label: 'History', color: 'from-blue-500 to-cyan-500', shadow: 'shadow-blue-500/25' }
             ].map((action, index) => (
               <div key={action.href}>

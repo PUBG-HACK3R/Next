@@ -59,26 +59,35 @@ export default function HistoryPage() {
     try {
       const allTransactions: Transaction[] = []
 
-      // Fetch deposits
-      const { data: deposits } = await supabase
-        .from('deposits')
-        .select('id, amount, status, created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+      // Fetch deposits using the working API
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = {}
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
 
-      if (deposits) {
-        deposits.forEach(deposit => {
+      const response = await fetch('/api/deposits?page=1&limit=100', { headers })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const deposits = data.deposits || []
+        
+        deposits.forEach((deposit: any) => {
           allTransactions.push({
             id: `deposit-${deposit.id}`,
             type: 'deposit',
-            amount: deposit.amount,
+            amount: deposit.amount_pkr,
             status: deposit.status,
             created_at: deposit.created_at,
-            description: 'Deposit Request',
-            reference: `DEP-${deposit.id}`
+            description: `${deposit.deposit_type === 'usdt' ? 'USDT' : deposit.deposit_type === 'easypaisa' ? 'EasyPaisa' : 'Bank'} Deposit #${deposit.id}`,
+            reference: deposit.id.toString()
           })
         })
       }
+
+      // USDT deposits are now included in the main deposits table above
+
 
       // Fetch withdrawals
       const { data: withdrawals } = await supabase

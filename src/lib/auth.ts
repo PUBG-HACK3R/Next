@@ -95,6 +95,44 @@ export async function getCurrentUser() {
   return { user, error }
 }
 
+// Server-side function to get user from request
+export async function getCurrentUserFromRequest(request: Request) {
+  try {
+    // Try to get token from Authorization header first
+    const authHeader = request.headers.get('authorization')
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '')
+      const { data: { user }, error } = await supabase.auth.getUser(token)
+      if (user && !error) {
+        return { user, error: null }
+      }
+    }
+
+    // Try to get token from cookies
+    const cookieHeader = request.headers.get('cookie')
+    if (cookieHeader) {
+      const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=')
+        acc[key] = value
+        return acc
+      }, {} as Record<string, string>)
+
+      // Look for Supabase session cookies
+      const accessToken = cookies['sb-access-token'] || cookies['supabase-auth-token']
+      if (accessToken) {
+        const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+        if (user && !error) {
+          return { user, error: null }
+        }
+      }
+    }
+
+    return { user: null, error: { message: 'No valid session found' } }
+  } catch (error: any) {
+    return { user: null, error: { message: error.message } }
+  }
+}
+
 export async function getUserProfile(userId: string) {
   const { data, error } = await supabase
     .from('user_profiles')

@@ -79,13 +79,23 @@ export default function WalletPage() {
 
   const fetchTransactions = async (userId: string) => {
     try {
-      // Fetch recent deposits
-      const { data: deposits } = await supabase
-        .from('deposits')
-        .select('id, amount, status, created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10)
+      // Fetch recent deposits using API
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = {}
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
+      const response = await fetch('/api/deposits?page=1&limit=10', { headers })
+      let deposits = []
+      
+      if (response.ok) {
+        const data = await response.json()
+        deposits = data.deposits || []
+      }
+
+      // USDT deposits are now included in the main deposits table above
 
       // Fetch recent withdrawals
       const { data: withdrawals } = await supabase
@@ -113,17 +123,18 @@ export default function WalletPage() {
       const allTransactions: Transaction[] = []
 
       if (deposits) {
-        deposits.forEach(deposit => {
+        deposits.forEach((deposit: any) => {
           allTransactions.push({
             id: deposit.id,
             type: 'deposit',
-            amount: deposit.amount,
+            amount: deposit.amount_pkr,
             status: deposit.status,
             created_at: deposit.created_at,
-            description: 'Deposit'
+            description: `${deposit.deposit_type === 'usdt' ? 'USDT' : deposit.deposit_type === 'easypaisa' ? 'EasyPaisa' : 'Bank'} Deposit`
           })
         })
       }
+
 
       if (withdrawals) {
         withdrawals.forEach(withdrawal => {

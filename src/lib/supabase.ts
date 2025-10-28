@@ -3,7 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+})
 
 export type Database = {
   public: {
@@ -12,22 +18,22 @@ export type Database = {
         Row: {
           id: string
           full_name: string
-          email: string
-          balance: number
-          referred_by: string | null
-          referral_code: string
           user_level: number
-          withdrawal_account_type: string | null
-          withdrawal_account_name: string | null
-          withdrawal_account_number: string | null
+          balance: number
+          earned_balance: number
+          referral_code: string
+          referred_by: string | null
           created_at: string
           updated_at: string
+          withdrawal_account_title: string | null
+          withdrawal_account_number: string | null
         }
         Insert: {
           id: string
           full_name: string
           email: string
           balance?: number
+          earned_balance?: number
           referred_by?: string | null
           referral_code?: string
           user_level?: number
@@ -40,6 +46,7 @@ export type Database = {
           full_name?: string
           email?: string
           balance?: number
+          earned_balance?: number
           referred_by?: string | null
           referral_code?: string
           user_level?: number

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Deposit APIs</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Test Deposit APIs</h1>
+    
+    <button onclick="testGetDeposits()">Test GET /api/deposits</button>
+    <button onclick="testAdminDeposits()">Test GET /api/admin/deposits</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testGetDeposits() {
+            try {
+                const response = await fetch('/api/deposits');
+                const data = await response.json();
+                showResult('GET /api/deposits', data);
+            } catch (error) {
+                showResult('GET /api/deposits ERROR', error.message);
+            }
+        }
+
+        async function testAdminDeposits() {
+            try {
+                const response = await fetch('/api/admin/deposits');
+                const data = await response.json();
+                showResult('GET /api/admin/deposits', data);
+            } catch (error) {
+                showResult('GET /api/admin/deposits ERROR', error.message);
+            }
+        }
+
+        function showResult(title, data) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = 'result';
+            div.innerHTML = `<h3>${title}</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            results.appendChild(div);
+        }
+    </script>
+</body>
+</html>

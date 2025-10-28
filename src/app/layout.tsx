@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Parkinsans } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,10 +12,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const parkinsans = Parkinsans({
-  variable: "--font-parkinsans",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "SmartGrow Mining - Cryptocurrency Mining Investment Platform",
@@ -35,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${parkinsans.variable} antialiased min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white`}
       >
         {children}
       </body>

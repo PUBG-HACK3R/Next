@@ -52,12 +52,12 @@ export default function AdminDashboard() {
         supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
         supabase.from('deposits').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('withdrawals').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('deposits').select('amount').eq('status', 'approved'),
+        supabase.from('deposits').select('amount_pkr').eq('status', 'approved'),
         supabase.from('withdrawals').select('amount').eq('status', 'approved'),
         supabase.from('plans').select('id', { count: 'exact', head: true }).eq('status', 'Active')
       ])
 
-      const totalDepositsAmount = totalDepositsResult.data?.reduce((sum, deposit) => sum + deposit.amount, 0) || 0
+      const totalDepositsAmount = totalDepositsResult.data?.reduce((sum, deposit) => sum + deposit.amount_pkr, 0) || 0
       const totalWithdrawalsAmount = totalWithdrawalsResult.data?.reduce((sum, withdrawal) => sum + withdrawal.amount, 0) || 0
 
       setStats({
