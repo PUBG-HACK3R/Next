@@ -256,12 +256,6 @@ export default function LoginPage() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 1 }}
             >
-              <Link
-                href="/forgot-password"
-                className="block text-sm text-slate-400 hover:text-white hover:underline transition-colors"
-              >
-                Forgot your password?
-              </Link>
               <div className="text-sm text-slate-400">
                 Don't have an account?{' '}
                 <Link href="/signup" className="text-blue-400 hover:text-blue-300 hover:underline font-medium transition-colors">

@@ -21,9 +21,12 @@ import {
   Target,
   Award,
   Zap,
-  HelpCircle
+  HelpCircle,
+  ArrowDownToLine,
+  ArrowUpFromLine
 } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
+import AnnouncementPopup from '@/components/AnnouncementPopup'
 
 interface Plan {
   id: number
@@ -165,15 +168,9 @@ export default function DashboardHome() {
           {/* Top Navigation */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
-              </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-                  SmartGrow
+                  Dashboard
                 </h1>
                 <p className="text-xs text-slate-400">Investment Platform</p>
               </div>
@@ -218,8 +215,8 @@ export default function DashboardHome() {
           {/* Quick Actions */}
           <div className="grid grid-cols-4 gap-4 mb-8">
             {[
-              { href: '/dashboard/deposit', icon: Plus, label: 'Deposit', color: 'from-green-500 to-emerald-600', shadow: 'shadow-green-500/25' },
-              { href: '/dashboard/withdraw', icon: Minus, label: 'Withdraw', color: 'from-orange-500 to-red-500', shadow: 'shadow-orange-500/25' },
+              { href: '/dashboard/deposit', icon: ArrowDownToLine, label: 'Deposit', color: 'from-green-500 to-emerald-600', shadow: 'shadow-green-500/25' },
+              { href: '/dashboard/withdraw', icon: ArrowUpFromLine, label: 'Withdraw', color: 'from-orange-500 to-red-500', shadow: 'shadow-orange-500/25' },
               { href: '/dashboard/wallet', icon: Wallet, label: 'Wallet', color: 'from-purple-500 to-pink-500', shadow: 'shadow-purple-500/25' },
               { href: '/dashboard/history', icon: History, label: 'History', color: 'from-blue-500 to-cyan-500', shadow: 'shadow-blue-500/25' }
             ].map((action, index) => (
@@ -386,6 +383,9 @@ export default function DashboardHome() {
           </div>
         </div>
       </div>
+
+      {/* Announcement Popup */}
+      <AnnouncementPopup />
     </div>
   )
 }

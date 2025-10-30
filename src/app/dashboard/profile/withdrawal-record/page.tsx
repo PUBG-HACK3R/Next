@@ -83,12 +83,14 @@ export default function WithdrawalRecordPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-PK', {
+    const date = new Date(dateString)
+    return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Asia/Karachi' // Pakistan timezone
     })
   }
 
@@ -201,35 +203,29 @@ export default function WithdrawalRecordPage() {
             </div>
           ) : (
             withdrawals.map((withdrawal) => (
-              <div key={withdrawal.id} className="bg-white/10 backdrop-blur-xl rounded-xl p-6 border border-white/20">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-3">
+              <div key={withdrawal.id} className="bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 flex items-center justify-center">
                       {getStatusIcon(withdrawal.status)}
-                      <div>
-                        <h3 className="font-semibold text-white">
-                          {formatCurrency(withdrawal.amount)}
-                        </h3>
-                        <p className="text-sm text-slate-400">
-                          {withdrawal.account_type?.toUpperCase()} - {withdrawal.account_name}
-                        </p>
-                      </div>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-slate-400">Account Number</p>
-                        <p className="text-white font-medium">{withdrawal.account_number}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-400">Date</p>
-                        <p className="text-white font-medium">{formatDate(withdrawal.created_at)}</p>
-                      </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-white text-sm">
+                        {withdrawal.account_type?.toUpperCase()} Withdrawal
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        {formatDate(withdrawal.created_at)} • {withdrawal.account_name}
+                      </p>
                     </div>
                   </div>
                   
-                  <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(withdrawal.status)}`}>
-                    {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
+                  <div className="text-right">
+                    <p className="font-semibold text-white text-sm">
+                      {formatCurrency(withdrawal.amount)}
+                    </p>
+                    <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(withdrawal.status)}`}>
+                      {withdrawal.status}
+                    </div>
                   </div>
                 </div>
               </div>

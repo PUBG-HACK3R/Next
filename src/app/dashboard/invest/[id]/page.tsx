@@ -269,198 +269,145 @@ export default function InvestPage() {
   const { profit, total } = calculateReturns()
 
   return (
-    <div className="p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
       {/* Header */}
       <div className="flex items-center mb-6">
         <Link href="/dashboard" className="mr-3">
-          <ArrowLeft className="w-6 h-6 text-gray-600" />
+          <ArrowLeft className="w-6 h-6 text-white" />
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">Invest in {plan.name}</h1>
+        <h1 className="text-xl font-bold text-white">Invest in {plan.name}</h1>
       </div>
 
-      {/* Plan Details */}
-      <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white mb-6">
-        <h2 className="text-xl font-semibold mb-4">{plan.name}</h2>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center space-x-2">
-            <Clock className="w-3 h-3" />
-            <div>
-              <p className="text-xs opacity-90">Duration</p>
-              <p className="text-sm font-semibold">{plan.duration_days} Days</p>
+      <div className="max-w-md mx-auto space-y-4">
+        {/* Plan Card - Compact */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-white">{plan.name}</h2>
+            <div className="bg-green-500/20 px-3 py-1 rounded-full">
+              <span className="text-green-400 text-sm font-semibold">{plan.profit_percent}%</span>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <TrendingUp className="w-3 h-3" />
-            <div>
-              <p className="text-xs opacity-90">Profit Rate</p>
-              <p className="text-sm font-semibold">{plan.profit_percent}%</p>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-blue-400" />
+              <div>
+                <p className="text-slate-400 text-xs">Duration</p>
+                <p className="text-white font-medium">{plan.duration_days} Days</p>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <DollarSign className="w-3 h-3" />
-            <div>
-              <p className="text-xs opacity-90">Min Investment</p>
-              <p className="text-sm font-semibold">{formatCurrency(plan.min_investment)}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <DollarSign className="w-3 h-3" />
-            <div>
-              <p className="text-xs opacity-90">Max Investment</p>
-              <p className="text-sm font-semibold">{formatCurrency(plan.max_investment || 50000)}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <CheckCircle className="w-3 h-3" />
-            <div>
-              <p className="text-xs opacity-90">Capital Return</p>
-              <p className="text-sm font-semibold">{plan.capital_return ? 'Yes' : 'No'}</p>
+            
+            <div className="flex items-center space-x-2">
+              <DollarSign className="w-4 h-4 text-green-400" />
+              <div>
+                <p className="text-slate-400 text-xs">Min Amount</p>
+                <p className="text-white font-medium">{formatCurrency(plan.min_investment)}</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Balance Display */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-blue-600">Available Balance</p>
-            <p className="text-xl font-bold text-blue-900">
-              {profile ? formatCurrency(profile.balance) : 'PKR 0.00'}
-            </p>
+        {/* Balance Card - Compact */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-400 text-sm">Available Balance</p>
+              <p className="text-xl font-bold text-white">
+                {profile ? formatCurrency(profile.balance) : 'PKR 0.00'}
+              </p>
+            </div>
+            <Link
+              href="/dashboard/deposit"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm transition-colors"
+            >
+              Add Funds
+            </Link>
           </div>
-          <Link
-            href="/dashboard/deposit"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors"
-          >
-            Add Funds
-          </Link>
         </div>
-      </div>
 
-      {/* Investment Form */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Investment Amount</h3>
-        
-        <form onSubmit={handleInvest} className="space-y-4">
-          <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-              Amount (PKR)
-            </label>
-            <input
-              id="amount"
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-              min={plan.min_investment}
-              max={Math.min(profile?.balance || 0, plan.max_investment || 50000)}
-              step="1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="Enter investment amount"
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>Min: {formatCurrency(plan.min_investment)}</span>
-              <span>Max: {formatCurrency(plan.max_investment || 50000)}</span>
+        {/* Investment Form - Compact */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20">
+          <form onSubmit={handleInvest} className="space-y-4">
+            <div>
+              <label htmlFor="amount" className="block text-sm font-medium text-white mb-2">
+                Investment Amount (PKR)
+              </label>
+              <input
+                id="amount"
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+                min={plan.min_investment}
+                max={Math.min(profile?.balance || 0, plan.max_investment || 50000)}
+                step="1"
+                className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter amount"
+              />
             </div>
-          </div>
 
-          {/* Quick Amount Buttons */}
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => setAmount(plan.min_investment.toString())}
-              className="bg-gray-100 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-200 transition-colors"
-            >
-              Minimum
-            </button>
-            <button
-              type="button"
-              onClick={() => setAmount(Math.floor((profile?.balance || 0) / 2).toString())}
-              className="bg-gray-100 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-200 transition-colors"
-            >
-              50%
-            </button>
-            <button
-              type="button"
-              onClick={() => setAmount(Math.min(profile?.balance || 0, plan.max_investment || 50000).toString())}
-              className="bg-gray-100 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-200 transition-colors"
-            >
-              Max Available
-            </button>
-          </div>
+            {/* Quick Amount Buttons */}
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setAmount(plan.min_investment.toString())}
+                className="bg-white/10 text-white py-2 px-3 rounded-lg text-sm hover:bg-white/20 transition-colors border border-white/20"
+              >
+                Min
+              </button>
+              <button
+                type="button"
+                onClick={() => setAmount(Math.floor((profile?.balance || 0) / 2).toString())}
+                className="bg-white/10 text-white py-2 px-3 rounded-lg text-sm hover:bg-white/20 transition-colors border border-white/20"
+              >
+                50%
+              </button>
+              <button
+                type="button"
+                onClick={() => setAmount(Math.min(profile?.balance || 0, plan.max_investment || 50000).toString())}
+                className="bg-white/10 text-white py-2 px-3 rounded-lg text-sm hover:bg-white/20 transition-colors border border-white/20"
+              >
+                Max
+              </button>
+            </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={investing || !amount || parseFloat(amount) < plan.min_investment || !canPurchase}
-            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {!canPurchase ? 'Purchase Limit Reached' : (investing ? 'Processing Investment...' : 'Invest Now')}
-          </button>
-          
-          {plan.purchase_limit_per_user && (
-            <div className="text-center text-sm text-gray-600">
-              Purchases: {purchaseCount}/{plan.purchase_limit_per_user}
-            </div>
-          )}
-        </form>
-      </div>
-
-      {/* Return Calculator */}
-      {amount && parseFloat(amount) >= plan.min_investment && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-            <Calculator className="w-5 h-5 mr-2" />
-            Expected Returns
-          </h3>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Investment Amount:</span>
-              <span className="font-semibold">{formatCurrency(parseFloat(amount))}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Profit ({plan.profit_percent}%):</span>
-              <span className="font-semibold text-green-600">+{formatCurrency(profit)}</span>
-            </div>
-            
-            {plan.capital_return && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Capital Return:</span>
-                <span className="font-semibold">+{formatCurrency(parseFloat(amount))}</span>
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl text-sm">
+                {error}
               </div>
             )}
-            
-            <div className="border-t pt-3">
-              <div className="flex justify-between">
-                <span className="text-gray-900 font-semibold">Total Return:</span>
-                <span className="font-bold text-green-600 text-lg">{formatCurrency(total)}</span>
+
+            {/* Expected Profit - Inline */}
+            {amount && parseFloat(amount) >= plan.min_investment && (
+              <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-300">Expected Profit:</span>
+                  <span className="font-bold text-green-400">{formatCurrency(total)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs text-slate-400 mt-1">
+                  <span>Profit: {formatCurrency(profit)}</span>
+                  <span>In {plan.duration_days} days</span>
+                </div>
               </div>
-            </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={investing || !amount || parseFloat(amount) < plan.min_investment || !canPurchase}
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <TrendingUp className="w-5 h-5" />
+              <span>{!canPurchase ? 'Purchase Limit Reached' : (investing ? 'Processing...' : 'Start Investment')}</span>
+            </button>
             
-            <div className="bg-green-50 border border-green-200 rounded-md p-3">
-              <p className="text-sm text-green-800">
-                <strong>Maturity Date:</strong> {new Date(Date.now() + plan.duration_days * 24 * 60 * 60 * 1000).toLocaleDateString('en-PK')}
-              </p>
-              <p className="text-sm text-green-800 mt-1">
-                Your investment will mature in {plan.duration_days} days and returns will be credited to your account.
-              </p>
-            </div>
-          </div>
+            {plan.purchase_limit_per_user && (
+              <div className="text-center text-sm text-slate-400">
+                Purchases: {purchaseCount}/{plan.purchase_limit_per_user}
+              </div>
+            )}
+          </form>
         </div>
-      )}
+      </div>
     </div>
   )
 }

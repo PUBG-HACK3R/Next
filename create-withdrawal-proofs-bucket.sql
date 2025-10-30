@@ -1,0 +1,5 @@
+-- No need for separate withdrawal proofs bucket
+-- Using existing 'deposit_proofs' bucket for both deposits and withdrawals
+-- 
+-- All proof uploads (deposits and withdrawals) will use the same bucket
+-- This simplifies storage management and uses existing RLS policies

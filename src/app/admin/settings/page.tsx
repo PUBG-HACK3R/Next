@@ -27,6 +27,10 @@ interface AdminSettings {
   min_usdt_deposit: number
   usdt_to_pkr_rate: number
   usdt_chains: Array<{name: string, network: string, enabled: boolean}>
+  announcement_enabled: boolean
+  announcement_title: string
+  announcement_text: string
+  announcement_type: 'info' | 'warning' | 'success' | 'error'
   deposit_details: {
     bank: {
       name: string
@@ -149,6 +153,10 @@ export default function AdminSettingsPage() {
         min_usdt_deposit: minUsdtDeposit,
         usdt_to_pkr_rate: usdtToPkrRate,
         usdt_chains: usdtChains,
+        announcement_enabled: settings?.announcement_enabled || false,
+        announcement_title: settings?.announcement_title || '',
+        announcement_text: settings?.announcement_text || '',
+        announcement_type: settings?.announcement_type || 'info',
         deposit_details: {
           bank: {
             name: bankName,
@@ -394,6 +402,78 @@ export default function AdminSettingsPage() {
             <p className="text-xs text-white/80 mt-1">
               WhatsApp group invitation link for users to join community group
             </p>
+          </div>
+        </div>
+
+        {/* Announcement Settings */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+            <MessageCircle className="w-5 h-5 mr-2" />
+            Dashboard Announcement
+          </h3>
+          
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="announcement_enabled"
+                checked={settings?.announcement_enabled || false}
+                onChange={(e) => setSettings(prev => prev ? {...prev, announcement_enabled: e.target.checked} : null)}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="announcement_enabled" className="text-sm font-medium text-white">
+                Enable Dashboard Announcement
+              </label>
+            </div>
+
+            {settings?.announcement_enabled && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    Announcement Title
+                  </label>
+                  <input
+                    type="text"
+                    value={settings?.announcement_title || ''}
+                    onChange={(e) => setSettings(prev => prev ? {...prev, announcement_title: e.target.value} : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., Welcome to SmartGrow!"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    Announcement Type
+                  </label>
+                  <select
+                    value={settings?.announcement_type || 'info'}
+                    onChange={(e) => setSettings(prev => prev ? {...prev, announcement_type: e.target.value as 'info' | 'warning' | 'success' | 'error'} : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="info">Info (Blue)</option>
+                    <option value="success">Success (Green)</option>
+                    <option value="warning">Warning (Yellow)</option>
+                    <option value="error">Error (Red)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    Announcement Text
+                  </label>
+                  <textarea
+                    value={settings?.announcement_text || ''}
+                    onChange={(e) => setSettings(prev => prev ? {...prev, announcement_text: e.target.value} : null)}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your announcement message here..."
+                  />
+                  <p className="text-xs text-white/80 mt-1">
+                    This message will appear as a popup every time users visit the dashboard
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

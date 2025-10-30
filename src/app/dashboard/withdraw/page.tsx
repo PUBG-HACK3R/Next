@@ -27,6 +27,8 @@ export default function WithdrawPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [settings, setSettings] = useState<AdminSettings | null>(null)
   const [amount, setAmount] = useState('')
+  const [proofFile, setProofFile] = useState<File | null>(null)
+  const [uploadingProof, setUploadingProof] = useState(false)
   const [loading, setLoading] = useState(false)
   const [pageLoading, setPageLoading] = useState(true)
   const [error, setError] = useState('')
@@ -114,6 +116,12 @@ export default function WithdrawPage() {
       return
     }
 
+    if (!proofFile) {
+      setError('Please upload proof of your withdrawal request')
+      setLoading(false)
+      return
+    }
+
     try {
       // Use the decrement function to check and deduct balance
       const { data: balanceResult, error: balanceError } = await supabase.rpc('decrement_user_balance', {
@@ -129,7 +137,27 @@ export default function WithdrawPage() {
         return
       }
 
-      // Create withdrawal record
+      // Upload proof file
+      setUploadingProof(true)
+      const fileExt = proofFile.name.split('.').pop()
+      const fileName = `${user.id}_${Date.now()}.${fileExt}`
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('deposit_proofs')
+        .upload(fileName, proofFile)
+
+      if (uploadError) {
+        // Revert balance if proof upload fails
+        await supabase.rpc('increment_user_balance', {
+          user_id: user.id,
+          amount: withdrawalAmount
+        })
+        throw new Error('Failed to upload proof: ' + uploadError.message)
+      }
+
+      setUploadingProof(false)
+
+      // Create withdrawal record with local timestamp and proof
       const { error: insertError } = await supabase
         .from('withdrawals')
         .insert({
@@ -138,13 +166,16 @@ export default function WithdrawPage() {
           fee_amount: feeAmount,
           fee_percent: feePercent,
           total_deducted: withdrawalAmount,
-          status: 'pending'
+          status: 'pending',
+          proof_url: uploadData.path,
+          created_at: new Date().toISOString()
         })
 
       if (insertError) throw insertError
 
       setSuccess(true)
       setAmount('')
+      setProofFile(null)
       
       // Update local profile balance
       setProfile(prev => prev ? { ...prev, balance: prev.balance - withdrawalAmount } : null)
@@ -276,6 +307,30 @@ export default function WithdrawPage() {
               </div>
             </div>
 
+            {/* Proof Upload - Required */}
+            <div>
+              <label htmlFor="proof" className="block text-sm font-medium text-gray-700 mb-2">
+                Withdrawal Proof <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="proof"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <div className="text-xs text-gray-500 mt-1">
+                <p>Upload proof of your withdrawal request (screenshot, receipt, etc.)</p>
+                <p>Accepted formats: Images (JPG, PNG) or PDF • Max size: 10MB</p>
+              </div>
+              {proofFile && (
+                <div className="mt-2 text-sm text-green-600">
+                  ✓ Selected: {proofFile.name}
+                </div>
+              )}
+            </div>
+
             {/* Fee Calculation Display */}
             {amount && parseFloat(amount) > 0 && settings && (
               <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
@@ -310,6 +365,7 @@ export default function WithdrawPage() {
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <h4 className="font-medium text-blue-900 mb-2">Important Notes:</h4>
               <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Proof upload is required for all withdrawal requests</li>
                 <li>• Withdrawal requests are processed within 24-48 hours</li>
                 <li>• The amount will be deducted from your balance immediately</li>
                 <li>• Funds will be sent to your bound account</li>
@@ -320,10 +376,10 @@ export default function WithdrawPage() {
 
             <button
               type="submit"
-              disabled={loading || !profile?.withdrawal_account_type}
+              disabled={loading || uploadingProof || !profile?.withdrawal_account_type || !proofFile}
               className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Processing...' : 'Submit Withdrawal Request'}
+              {uploadingProof ? 'Uploading Proof...' : loading ? 'Processing...' : 'Submit Withdrawal Request'}
             </button>
           </form>
         </div>

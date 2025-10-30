@@ -44,6 +44,12 @@ export default function AdminUsersPage() {
   const [editingBalance, setEditingBalance] = useState(false)
   const [newBalance, setNewBalance] = useState('')
   const [updating, setUpdating] = useState(false)
+  const [editingWithdrawal, setEditingWithdrawal] = useState(false)
+  const [withdrawalDetails, setWithdrawalDetails] = useState({
+    type: '',
+    name: '',
+    number: ''
+  })
 
   useEffect(() => {
     fetchUsers()
@@ -55,7 +61,26 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      // Fetch user profiles with auth users data
+      // Method 1: Try to use the admin view with emails
+      const { data: usersWithEmail, error: viewError } = await supabase
+        .from('admin_users_with_email')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (!viewError && usersWithEmail) {
+        // Map auth_email to email for consistency
+        const usersWithCorrectEmail = usersWithEmail.map(user => ({
+          ...user,
+          email: user.auth_email || user.email || 'No email'
+        }))
+        setUsers(usersWithCorrectEmail)
+        setLoading(false)
+        return
+      }
+
+      console.log('View method failed, trying alternatives:', viewError)
+
+      // Method 2: Try RPC function
       const { data: profiles, error: profilesError } = await supabase
         .from('user_profiles')
         .select('*')
@@ -63,32 +88,52 @@ export default function AdminUsersPage() {
 
       if (profilesError) throw profilesError
 
-      // Fetch auth users to get email addresses
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
+      if (profiles) {
+        try {
+          const { data: emailData, error: rpcError } = await supabase
+            .rpc('get_user_emails', { user_ids: profiles.map(p => p.id) })
 
-      if (authError) throw authError
-
-      // Combine the data
-      const usersWithEmail = profiles?.map(profile => {
-        const authUser = authUsers.users.find(u => u.id === profile.id)
-        return {
-          ...profile,
-          email: authUser?.email || 'N/A'
+          if (!rpcError && emailData) {
+            const usersWithEmailFromRPC = profiles.map(profile => {
+              const emailInfo = emailData.find((e: any) => e.id === profile.id)
+              return {
+                ...profile,
+                email: emailInfo?.email || 'No email found'
+              }
+            })
+            setUsers(usersWithEmailFromRPC)
+            setLoading(false)
+            return
+          }
+        } catch (rpcError) {
+          console.log('RPC method failed:', rpcError)
         }
-      }) || []
 
-      setUsers(usersWithEmail)
+        // Method 3: Try admin API
+        try {
+          const { data: authData } = await supabase.auth.admin.listUsers()
+          if (authData?.users) {
+            const usersWithEmailFromAdmin = profiles.map(profile => {
+              const authUser = authData.users.find(u => u.id === profile.id)
+              return {
+                ...profile,
+                email: authUser?.email || 'Email unavailable'
+              }
+            })
+            setUsers(usersWithEmailFromAdmin)
+            setLoading(false)
+            return
+          }
+        } catch (adminError) {
+          console.log('Admin API failed:', adminError)
+        }
+
+        // Fallback: Use profiles without email
+        setUsers(profiles.map(p => ({ ...p, email: 'Run SQL setup for emails' })))
+      }
     } catch (error) {
       console.error('Error fetching users:', error)
-      // Fallback to just profiles if auth admin access fails
-      const { data: profiles } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (profiles) {
-        setUsers(profiles.map(p => ({ ...p, email: 'N/A' })))
-      }
+      setUsers([])
     }
     setLoading(false)
   }
@@ -175,6 +220,42 @@ export default function AdminUsersPage() {
     } catch (error: any) {
       console.error('Error updating balance:', error)
       alert('Failed to update balance: ' + error.message)
+    }
+    setUpdating(false)
+  }
+
+  const updateWithdrawalDetails = async () => {
+    if (!selectedUser) return
+
+    setUpdating(true)
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          withdrawal_account_type: withdrawalDetails.type || null,
+          withdrawal_account_name: withdrawalDetails.name || null,
+          withdrawal_account_number: withdrawalDetails.number || null
+        })
+        .eq('id', selectedUser.id)
+
+      if (error) throw error
+
+      // Update local state
+      const updatedUser = {
+        ...selectedUser,
+        withdrawal_account_type: withdrawalDetails.type || null,
+        withdrawal_account_name: withdrawalDetails.name || null,
+        withdrawal_account_number: withdrawalDetails.number || null
+      }
+      
+      setUsers(users.map(u => 
+        u.id === selectedUser.id ? updatedUser : u
+      ))
+      setSelectedUser(updatedUser)
+      setEditingWithdrawal(false)
+
+    } catch (error) {
+      console.error('Error updating withdrawal details:', error)
     }
     setUpdating(false)
   }
@@ -416,18 +497,89 @@ export default function AdminUsersPage() {
               </div>
 
               {/* Withdrawal Account */}
-              {selectedUser.withdrawal_account_type && (
-                <div className="mb-6">
-                  <h4 className="font-medium text-gray-900 mb-3">Withdrawal Account</h4>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="space-y-1 text-sm">
-                      <div><span className="text-gray-900 font-medium">Type:</span> <span className="font-medium">{selectedUser.withdrawal_account_type}</span></div>
-                      <div><span className="text-gray-900 font-medium">Name:</span> <span className="font-medium">{selectedUser.withdrawal_account_name}</span></div>
-                      <div><span className="text-gray-900 font-medium">Number:</span> <span className="font-medium">{selectedUser.withdrawal_account_number}</span></div>
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-gray-900">Withdrawal Account</h4>
+                  <button
+                    onClick={() => {
+                      setEditingWithdrawal(true)
+                      setWithdrawalDetails({
+                        type: selectedUser.withdrawal_account_type || '',
+                        name: selectedUser.withdrawal_account_name || '',
+                        number: selectedUser.withdrawal_account_number || ''
+                      })
+                    }}
+                    className="text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {editingWithdrawal ? (
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
+                      <select
+                        value={withdrawalDetails.type}
+                        onChange={(e) => setWithdrawalDetails({...withdrawalDetails, type: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      >
+                        <option value="">Select Type</option>
+                        <option value="bank">Bank Account</option>
+                        <option value="easypaisa">EasyPaisa</option>
+                        <option value="jazzcash">JazzCash</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
+                      <input
+                        type="text"
+                        value={withdrawalDetails.name}
+                        onChange={(e) => setWithdrawalDetails({...withdrawalDetails, name: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        placeholder="Account holder name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                      <input
+                        type="text"
+                        value={withdrawalDetails.number}
+                        onChange={(e) => setWithdrawalDetails({...withdrawalDetails, number: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        placeholder="Account number or mobile number"
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={updateWithdrawalDetails}
+                        disabled={updating}
+                        className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {updating ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => setEditingWithdrawal(false)}
+                        className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    {selectedUser.withdrawal_account_type ? (
+                      <div className="space-y-1 text-sm">
+                        <div><span className="text-gray-900 font-medium">Type:</span> <span className="font-medium">{selectedUser.withdrawal_account_type?.toUpperCase()}</span></div>
+                        <div><span className="text-gray-900 font-medium">Name:</span> <span className="font-medium">{selectedUser.withdrawal_account_name}</span></div>
+                        <div><span className="text-gray-900 font-medium">Number:</span> <span className="font-medium">{selectedUser.withdrawal_account_number}</span></div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">No withdrawal account set</p>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* User Stats */}
               {userStats && (

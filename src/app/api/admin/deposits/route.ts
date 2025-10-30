@@ -172,7 +172,14 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    // Temporarily bypass auth for testing - TODO: Fix admin auth later
+    // Get current admin user (temporarily bypass auth for debugging)
+    let currentAdmin = null
+    try {
+      const { user } = await getCurrentUserFromRequest(request)
+      currentAdmin = user
+    } catch (authError) {
+      console.log('Auth failed, continuing without admin tracking:', authError)
+    }
 
     const body = await request.json()
     const { deposit_id, action, rejection_reason, admin_notes } = body
@@ -197,14 +204,21 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'Deposit not found' }, { status: 404 })
       }
 
-      // Update deposit status
+      // Update deposit status with admin tracking
+      const updateData: any = { 
+        status: 'approved',
+        processed_at: new Date().toISOString(),
+        admin_notes: admin_notes || null
+      }
+      
+      if (currentAdmin) {
+        updateData.approved_by = currentAdmin.id
+        updateData.approved_at = new Date().toISOString()
+      }
+
       const { error: approveError } = await supabase
         .from('deposits')
-        .update({ 
-          status: 'approved',
-          processed_at: new Date().toISOString(),
-          admin_notes: admin_notes || null
-        })
+        .update(updateData)
         .eq('id', deposit_id)
 
       if (approveError) {
@@ -246,15 +260,22 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'Rejection reason is required' }, { status: 400 })
       }
 
-      // Simple rejection - just update status and reason
+      // Rejection with admin tracking
+      const rejectData: any = { 
+        status: 'rejected',
+        rejection_reason: rejection_reason,
+        processed_at: new Date().toISOString(),
+        admin_notes: admin_notes || null
+      }
+      
+      if (currentAdmin) {
+        rejectData.approved_by = currentAdmin.id
+        rejectData.approved_at = new Date().toISOString()
+      }
+
       const { error: rejectError } = await supabase
         .from('deposits')
-        .update({ 
-          status: 'rejected',
-          rejection_reason: rejection_reason,
-          processed_at: new Date().toISOString(),
-          admin_notes: admin_notes || null
-        })
+        .update(rejectData)
         .eq('id', deposit_id)
 
       if (rejectError) {

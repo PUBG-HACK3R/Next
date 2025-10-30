@@ -91,12 +91,14 @@ export default function DepositRecordPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-PK', {
+    const date = new Date(dateString)
+    return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Asia/Karachi' // Pakistan timezone
     })
   }
 
@@ -224,47 +226,37 @@ export default function DepositRecordPage() {
             </div>
           ) : (
             deposits.map((deposit) => (
-              <div key={deposit.id} className="bg-white/10 backdrop-blur-xl rounded-xl p-6 border border-white/20">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-3">
-                      {getStatusIcon(deposit.status)}
-                      <div>
-                        <h3 className="font-semibold text-white">
-                          {formatCurrency(deposit.amount_pkr)}
-                        </h3>
-                        <div className="flex items-center space-x-2">
-                          {getDepositTypeIcon(deposit.deposit_type)}
-                          <p className="text-sm text-slate-400">
-                            {deposit.deposit_type?.toUpperCase()} Deposit
-                          </p>
-                        </div>
-                      </div>
+              <div key={deposit.id} className="bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 flex items-center justify-center">
+                      {getDepositTypeIcon(deposit.deposit_type)}
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-slate-400">Deposit ID</p>
-                        <p className="text-white font-medium">#{deposit.id}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-400">Date</p>
-                        <p className="text-white font-medium">{formatDate(deposit.created_at)}</p>
-                      </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-white text-sm">
+                        {deposit.deposit_type?.toUpperCase()} Deposit #{deposit.id}
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        {formatDate(deposit.created_at)}
+                      </p>
                     </div>
-
-                    {deposit.admin_notes && (
-                      <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
-                        <p className="text-slate-400 text-xs">Admin Notes:</p>
-                        <p className="text-white text-sm">{deposit.admin_notes}</p>
-                      </div>
-                    )}
                   </div>
                   
-                  <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(deposit.status)}`}>
-                    {deposit.status.charAt(0).toUpperCase() + deposit.status.slice(1)}
+                  <div className="text-right">
+                    <p className="font-semibold text-white text-sm">
+                      {formatCurrency(deposit.amount_pkr)}
+                    </p>
+                    <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(deposit.status)}`}>
+                      {deposit.status}
+                    </div>
                   </div>
                 </div>
+                
+                {deposit.admin_notes && (
+                  <div className="mt-2 p-2 bg-white/5 rounded-lg border border-white/10">
+                    <p className="text-slate-400 text-xs">Note: {deposit.admin_notes}</p>
+                  </div>
+                )}
               </div>
             ))
           )}

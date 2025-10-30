@@ -216,12 +216,14 @@ export default function HistoryPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-PK', {
+    const date = new Date(dateString)
+    return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'Asia/Karachi' // Pakistan timezone
     })
   }
 
@@ -404,32 +406,32 @@ export default function HistoryPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {filteredTransactions.map((transaction) => (
-              <div key={transaction.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+              <div key={transaction.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full">
+                    <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full">
                       {getTransactionIcon(transaction.type)}
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{transaction.description}</p>
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 text-sm">{transaction.description}</p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-500">
                         <span>{formatDate(transaction.created_at)}</span>
                         {transaction.reference && (
                           <>
                             <span>•</span>
-                            <span>{transaction.reference}</span>
+                            <span className="truncate max-w-20">{transaction.reference}</span>
                           </>
                         )}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-semibold ${getAmountColor(transaction.type)}`}>
+                    <p className={`font-semibold text-sm ${getAmountColor(transaction.type)}`}>
                       {getAmountPrefix(transaction.type)}{formatCurrency(transaction.amount)}
                     </p>
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(transaction.status)}`}>
+                    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(transaction.status)}`}>
                       {transaction.status}
                     </span>
                   </div>

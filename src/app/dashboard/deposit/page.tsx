@@ -193,18 +193,17 @@ export default function DepositPage() {
         }
       }
 
-      // Upload proof if provided
+      // Upload proof - now required for all deposit types
       let proofUrl = null
-      if (formData.proof_file) {
-        try {
-          proofUrl = await uploadProof(formData.proof_file)
-        } catch (uploadError) {
-          console.error('Proof upload failed:', uploadError)
-          // Continue without proof for traditional deposits, but fail for USDT
-          if (depositType === 'usdt') {
-            throw new Error('Proof upload failed. Please try again.')
-          }
-        }
+      if (!formData.proof_file) {
+        throw new Error('Payment proof is required for all deposits')
+      }
+      
+      try {
+        proofUrl = await uploadProof(formData.proof_file)
+      } catch (uploadError) {
+        console.error('Proof upload failed:', uploadError)
+        throw new Error('Proof upload failed. Please try again.')
       }
 
       // Prepare deposit data
@@ -642,7 +641,7 @@ export default function DepositPage() {
             {/* Proof upload */}
             <div>
               <label className="block text-white/80 text-sm font-medium mb-2">
-                Payment Proof (Screenshot) {depositType === 'usdt' && <span className="text-red-400">*</span>}
+                Payment Proof (Screenshot) <span className="text-red-400">*</span>
               </label>
               <div className="relative">
                 <input
@@ -651,7 +650,7 @@ export default function DepositPage() {
                   accept="image/*"
                   className="hidden"
                   id="proof-upload"
-                  required={depositType === 'usdt'}
+                  required
                 />
                 <label
                   htmlFor="proof-upload"
@@ -659,7 +658,7 @@ export default function DepositPage() {
                 >
                   <Upload className="w-5 h-5 mr-2" />
                   {formData.proof_file ? formData.proof_file.name : 
-                   `Upload Screenshot ${depositType === 'usdt' ? '(Required)' : '(Optional)'}`}
+                   'Upload Screenshot (Required)'}
                 </label>
               </div>
             </div>

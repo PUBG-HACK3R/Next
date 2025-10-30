@@ -11,6 +11,9 @@ interface Withdrawal {
   status: string
   rejection_reason: string | null
   created_at: string
+  approved_by?: string
+  approved_at?: string
+  approved_by_name?: string
   user_profiles: {
     full_name: string
     withdrawal_account_type: string | null
@@ -104,9 +107,16 @@ export default function AdminWithdrawalsPage() {
     setProcessingId(withdrawalId)
     
     try {
+      // Get current admin user
+      const { data: { user: currentAdmin } } = await supabase.auth.getUser()
+      
       const { error } = await supabase
         .from('withdrawals')
-        .update({ status: 'approved' })
+        .update({ 
+          status: 'approved',
+          approved_by: currentAdmin?.id,
+          approved_at: new Date().toISOString()
+        })
         .eq('id', withdrawalId)
 
       if (error) throw error
@@ -131,13 +141,18 @@ export default function AdminWithdrawalsPage() {
     setProcessingId(withdrawalId)
     
     try {
+      // Get current admin user
+      const { data: { user: currentAdmin } } = await supabase.auth.getUser()
+      
       // Start transaction-like operation
       // First, update withdrawal status
       const { error: withdrawalError } = await supabase
         .from('withdrawals')
         .update({ 
           status: 'rejected',
-          rejection_reason: rejectionReason
+          rejection_reason: rejectionReason,
+          approved_by: currentAdmin?.id,
+          approved_at: new Date().toISOString()
         })
         .eq('id', withdrawalId)
 
@@ -373,6 +388,20 @@ export default function AdminWithdrawalsPage() {
                       User has not bound a withdrawal account. Cannot process this withdrawal.
                     </span>
                   </div>
+                </div>
+              )}
+
+              {/* Admin Approval Info */}
+              {(withdrawal.status === 'approved' || withdrawal.status === 'rejected') && withdrawal.approved_by && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    <strong>{withdrawal.status === 'approved' ? 'Approved' : 'Rejected'} by:</strong> {withdrawal.approved_by_name || `Admin (${withdrawal.approved_by.slice(0, 8)}...)`}
+                    {withdrawal.approved_at && (
+                      <span className="ml-2 text-blue-600">
+                        on {formatDate(withdrawal.approved_at)}
+                      </span>
+                    )}
+                  </p>
                 </div>
               )}
             </div>

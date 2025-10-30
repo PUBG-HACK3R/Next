@@ -152,7 +152,7 @@ export default function AdminLayout({
             >
               <Menu size={24} />
             </button>
-            <h1 className="text-lg font-semibold text-white">SmartGrow Admin</h1>
+            <h1 className="text-lg font-semibold text-white">Admin Panel</h1>
             <div></div>
           </div>
         </header>

@@ -13,7 +13,10 @@ import {
   CheckCircle,
   AlertCircle,
   Plus,
-  HelpCircle
+  HelpCircle,
+  Archive,
+  ArrowUpRight,
+  Eye
 } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
 
@@ -47,6 +50,8 @@ export default function MyInvestmentsPage() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [investments, setInvestments] = useState<Investment[]>([])
+  const [expiredInvestments, setExpiredInvestments] = useState<Investment[]>([])
+  const [showExpiredPlans, setShowExpiredPlans] = useState(false)
   const [loading, setLoading] = useState(true)
   const [collectingIncome, setCollectingIncome] = useState<number | null>(null)
   const [stats, setStats] = useState({
@@ -54,6 +59,11 @@ export default function MyInvestmentsPage() {
     activeInvestments: 0,
     completedInvestments: 0,
     totalEarnings: 0
+  })
+  const [earningsStats, setEarningsStats] = useState({
+    todayEarnings: 0,
+    yesterdayEarnings: 0,
+    totalExpiredEarnings: 0
   })
   const router = useRouter()
 
@@ -82,6 +92,8 @@ export default function MyInvestmentsPage() {
       setUser(user)
 
       await fetchInvestments(user.id)
+      await fetchExpiredInvestments(user.id)
+      await fetchEarningsStats(user.id)
       await fetchProfile(user.id)
       setLoading(false)
     }
@@ -113,6 +125,94 @@ export default function MyInvestmentsPage() {
       }
     } catch (error) {
       console.error('Error fetching investments:', error)
+    }
+  }
+
+  const fetchExpiredInvestments = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('investments')
+        .select(`
+          *,
+          plans (
+            name,
+            duration_days,
+            profit_percent,
+            capital_return
+          )
+        `)
+        .eq('user_id', userId)
+        .in('status', ['completed', 'expired'])
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      if (data) {
+        setExpiredInvestments(data)
+      }
+    } catch (error) {
+      console.error('Error fetching expired investments:', error)
+    }
+  }
+
+  const fetchEarningsStats = async (userId: string) => {
+    try {
+      // Get daily income collections for earnings stats
+      const { data: incomeData, error } = await supabase
+        .from('daily_income_collections')
+        .select('amount, created_at')
+        .eq('user_id', userId)
+
+      let todayEarnings = 0
+      let yesterdayEarnings = 0
+      let totalExpiredEarnings = 0
+
+      if (!error && incomeData) {
+        const now = new Date()
+        const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+        const yesterday = new Date(today)
+        yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+        const tomorrow = new Date(today)
+        tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+
+        incomeData.forEach(income => {
+          const amount = income.amount
+          const incomeDate = new Date(income.created_at)
+          
+          if (incomeDate >= today && incomeDate < tomorrow) {
+            todayEarnings += amount
+          } else if (incomeDate >= yesterday && incomeDate < today) {
+            yesterdayEarnings += amount
+          }
+          
+          totalExpiredEarnings += amount
+        })
+      }
+
+      // Also get completed investment profits
+      const { data: completedInvestments, error: completedError } = await supabase
+        .from('investments')
+        .select(`
+          amount_invested,
+          plans!inner (profit_percent, capital_return)
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'completed')
+
+      if (!completedError && completedInvestments) {
+        completedInvestments.forEach((investment: any) => {
+          const profit = (investment.amount_invested * investment.plans.profit_percent) / 100
+          totalExpiredEarnings += profit
+        })
+      }
+
+      setEarningsStats({
+        todayEarnings,
+        yesterdayEarnings,
+        totalExpiredEarnings
+      })
+    } catch (error) {
+      console.error('Error fetching earnings stats:', error)
     }
   }
 
@@ -334,14 +434,14 @@ export default function MyInvestmentsPage() {
 
       {/* Investments List */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-4">Investment History</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">Active Investments</h3>
         
-        {investments.length === 0 ? (
+        {investments.filter(investment => investment.status === 'active').length === 0 ? (
           <div className="bg-white rounded-lg p-8 text-center border border-gray-200">
             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <TrendingUp className="w-6 h-6 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No investments yet</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No active investments</h3>
             <p className="text-gray-500 mb-4">Start your investment journey by choosing a plan.</p>
             <Link
               href="/dashboard"
@@ -352,7 +452,7 @@ export default function MyInvestmentsPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {investments.map((investment) => {
+            {investments.filter(investment => investment.status === 'active').map((investment) => {
               const daysRemaining = calculateDaysRemaining(investment.end_date)
               const progress = calculateProgress(investment.start_date, investment.end_date)
               const expectedProfit = (investment.amount_invested * investment.plans.profit_percent) / 100
@@ -385,7 +485,7 @@ export default function MyInvestmentsPage() {
                       <p className="text-xs font-bold text-gray-900">{investment.plans.duration_days} days</p>
                     </div>
                     <div>
-                      <span className="text-xs text-gray-500 font-medium">Expected Return</span>
+                      <span className="text-xs text-gray-500 font-medium">Expected Profit</span>
                       <p className="text-xs font-bold text-blue-600">{formatCurrency(totalReturn)}</p>
                     </div>
                   </div>
@@ -403,13 +503,14 @@ export default function MyInvestmentsPage() {
                         <button
                           onClick={() => collectDailyIncome(investment.id)}
                           disabled={!canCollectToday(investment) || collectingIncome === investment.id}
-                          className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                          className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                             canCollectToday(investment) && collectingIncome !== investment.id
-                              ? 'bg-green-600 text-white hover:bg-green-700'
-                              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                              : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          {collectingIncome === investment.id ? 'Collecting...' : 'Profit Collect'}
+                          <TrendingUp className="w-4 h-4" />
+                          <span>{collectingIncome === investment.id ? 'Collecting...' : 'Collect Profit'}</span>
                         </button>
                       </div>
                       
@@ -486,7 +587,115 @@ export default function MyInvestmentsPage() {
           </div>
         )}
 
+        {/* Expired Plans Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <Archive className="w-5 h-5 mr-2" />
+              Completed Plans
+            </h3>
+            <button
+              onClick={() => setShowExpiredPlans(!showExpiredPlans)}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <Eye className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                {showExpiredPlans ? 'Hide' : 'View'} ({expiredInvestments.length})
+              </span>
+            </button>
+          </div>
+
+          {/* Earnings Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-4 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-green-100 text-sm">Today Earnings</span>
+                <ArrowUpRight className="w-4 h-4 text-green-200" />
+              </div>
+              <div className="text-2xl font-bold">{formatCurrency(earningsStats.todayEarnings)}</div>
+              <div className="text-green-200 text-xs mt-1">From commissions</div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg p-4 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-blue-100 text-sm">Yesterday Earnings</span>
+                <TrendingUp className="w-4 h-4 text-blue-200" />
+              </div>
+              <div className="text-2xl font-bold">{formatCurrency(earningsStats.yesterdayEarnings)}</div>
+              <div className="text-blue-200 text-xs mt-1">Previous day</div>
+            </div>
+
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-4 text-white">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-purple-100 text-sm">Total Complete Income</span>
+                <DollarSign className="w-4 h-4 text-purple-200" />
+              </div>
+              <div className="text-2xl font-bold">{formatCurrency(earningsStats.totalExpiredEarnings)}</div>
+              <div className="text-purple-200 text-xs mt-1">All time</div>
+            </div>
+          </div>
+
+          {/* Expired Plans List */}
+          {showExpiredPlans && (
+            <div className="space-y-4">
+              {expiredInvestments.length === 0 ? (
+                <div className="text-center py-8">
+                  <Archive className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No expired plans found</p>
+                </div>
+              ) : (
+                expiredInvestments.map((investment) => {
+                  const profit = (investment.amount_invested * investment.plans.profit_percent) / 100
+                  const totalReturn = investment.plans.capital_return ? investment.amount_invested + profit : profit
+                  
+                  return (
+                    <div key={investment.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{investment.plans.name}</h4>
+                          <p className="text-sm text-gray-600">Invested: {formatCurrency(investment.amount_invested)}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-medium text-green-600 capitalize">{investment.status}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Duration:</span>
+                          <div className="font-medium">{investment.plans.duration_days} days</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Profit Rate:</span>
+                          <div className="font-medium">{investment.plans.profit_percent}%</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Profit Earned:</span>
+                          <div className="font-medium text-green-600">{formatCurrency(profit)}</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Total Return:</span>
+                          <div className="font-medium text-green-600">{formatCurrency(totalReturn)}</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center text-xs text-gray-500">
+                        <span>Started: {formatDate(investment.start_date)}</span>
+                        {investment.end_date && <span>Completed: {formatDate(investment.end_date)}</span>}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Customer Support for Investment Help */}
+        <div className="mt-8"></div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <HelpCircle className="w-5 h-5 mr-2" />

@@ -27,9 +27,15 @@ interface UserProfile {
   user_level: number
 }
 
+interface AdminSettings {
+  whatsapp_support_number: string
+  whatsapp_group_link: string
+}
+
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [settings, setSettings] = useState<AdminSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -53,6 +59,17 @@ export default function ProfilePage() {
         setProfile(profileData)
       }
 
+      // Fetch admin settings
+      const { data: settingsData } = await supabase
+        .from('admin_settings')
+        .select('whatsapp_support_number, whatsapp_group_link')
+        .eq('id', 1)
+        .single()
+
+      if (settingsData) {
+        setSettings(settingsData)
+      }
+
       setLoading(false)
     }
 
@@ -64,8 +81,14 @@ export default function ProfilePage() {
     router.push('/login')
   }
 
-  const handleWhatsApp = () => {
-    window.open('https://wa.me/1234567890', '_blank')
+  const handleCustomerSupport = () => {
+    const supportNumber = settings?.whatsapp_support_number || '1234567890'
+    window.open(`https://wa.me/${supportNumber}`, '_blank')
+  }
+
+  const handleSocialMedia = () => {
+    const groupLink = settings?.whatsapp_group_link || 'https://chat.whatsapp.com/default'
+    window.open(groupLink, '_blank')
   }
 
   const menuItems = [
@@ -168,7 +191,7 @@ export default function ProfilePage() {
 
           {/* Customer Service */}
           <button 
-            onClick={handleWhatsApp}
+            onClick={handleCustomerSupport}
             className="w-full bg-white/10 backdrop-blur-xl rounded-xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-200 group my-2"
           >
             <div className="flex items-center justify-between">
@@ -187,7 +210,7 @@ export default function ProfilePage() {
 
           {/* Social Media */}
           <button 
-            onClick={handleWhatsApp}
+            onClick={handleSocialMedia}
             className="w-full bg-white/10 backdrop-blur-xl rounded-xl p-5 border border-white/20 hover:bg-white/20 transition-all duration-200 group my-2"
           >
             <div className="flex items-center justify-between">

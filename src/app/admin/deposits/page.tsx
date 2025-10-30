@@ -18,6 +18,9 @@ interface Deposit {
   status: string
   rejection_reason: string | null
   created_at: string
+  approved_by?: string
+  approved_at?: string
+  approved_by_name?: string
 }
 
 export default function AdminDepositsPage() {
@@ -67,6 +70,7 @@ export default function AdminDepositsPage() {
   const approveDeposit = async (depositId: number, amount: number, userId: string) => {
     setProcessingId(depositId)
     try {
+      console.log('Approving deposit:', depositId)
       const response = await fetch('/api/admin/deposits', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -76,13 +80,21 @@ export default function AdminDepositsPage() {
         })
       })
 
+      console.log('Approve response status:', response.status)
+      const responseData = await response.json()
+      console.log('Approve response data:', responseData)
+
       if (response.ok) {
         setDeposits(deposits.map(d => 
           d.id === depositId ? { ...d, status: 'approved' } : d
         ))
+        alert('Deposit approved successfully!')
+      } else {
+        alert('Failed to approve deposit: ' + (responseData.error || 'Unknown error'))
       }
     } catch (error) {
       console.error('Error approving deposit:', error)
+      alert('Error approving deposit: ' + error)
     } finally {
       setProcessingId(null)
     }
@@ -91,6 +103,7 @@ export default function AdminDepositsPage() {
   const rejectDeposit = async (depositId: number) => {
     setProcessingId(depositId)
     try {
+      console.log('Rejecting deposit:', depositId, 'with reason:', rejectionReason)
       const response = await fetch('/api/admin/deposits', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -101,15 +114,23 @@ export default function AdminDepositsPage() {
         })
       })
 
+      console.log('Reject response status:', response.status)
+      const responseData = await response.json()
+      console.log('Reject response data:', responseData)
+
       if (response.ok) {
         setDeposits(deposits.map(d => 
           d.id === depositId ? { ...d, status: 'rejected', rejection_reason: rejectionReason } : d
         ))
         setShowRejectModal(null)
         setRejectionReason('')
+        alert('Deposit rejected successfully!')
+      } else {
+        alert('Failed to reject deposit: ' + (responseData.error || 'Unknown error'))
       }
     } catch (error) {
       console.error('Error rejecting deposit:', error)
+      alert('Error rejecting deposit: ' + error)
     } finally {
       setProcessingId(null)
     }
@@ -303,6 +324,20 @@ export default function AdminDepositsPage() {
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
                   <p className="text-sm text-red-800">
                     <strong>Rejection Reason:</strong> {deposit.rejection_reason}
+                  </p>
+                </div>
+              )}
+
+              {/* Admin Approval Info */}
+              {(deposit.status === 'approved' || deposit.status === 'rejected') && deposit.approved_by && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                  <p className="text-sm text-blue-800">
+                    <strong>{deposit.status === 'approved' ? 'Approved' : 'Rejected'} by:</strong> {deposit.approved_by_name || `Admin (${deposit.approved_by.slice(0, 8)}...)`}
+                    {deposit.approved_at && (
+                      <span className="ml-2 text-blue-600">
+                        on {formatDate(deposit.approved_at)}
+                      </span>
+                    )}
                   </p>
                 </div>
               )}

@@ -148,19 +148,27 @@ export default function InvitePage() {
       let level3Earnings = 0
       
       if (!commissionError && commissionData) {
-        const today = new Date()
+        // Get today's date in UTC to match database timestamps
+        const now = new Date()
+        const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
         const yesterday = new Date(today)
-        yesterday.setDate(yesterday.getDate() - 1)
+        yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+        const tomorrow = new Date(today)
+        tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
         
         commissionData.forEach(commission => {
           const amount = commission.commission_amount
           totalEarnings += amount
           
-          // Calculate today's and yesterday's earnings
+          // Calculate today's and yesterday's earnings using UTC date comparison
           const commissionDate = new Date(commission.created_at)
-          if (commissionDate.toDateString() === today.toDateString()) {
+          
+          // Check if commission is from today (between today 00:00 and tomorrow 00:00 UTC)
+          if (commissionDate >= today && commissionDate < tomorrow) {
             todayEarnings += amount
-          } else if (commissionDate.toDateString() === yesterday.toDateString()) {
+          } 
+          // Check if commission is from yesterday
+          else if (commissionDate >= yesterday && commissionDate < today) {
             yesterdayEarnings += amount
           }
           
@@ -519,6 +527,91 @@ export default function InvitePage() {
               <Share2 size={16} className="md:w-[18px] md:h-[18px]" />
               <span className="text-sm md:text-base">Share</span>
             </button>
+          </div>
+        </div>
+
+        {/* Commission Rates Card */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-lg border border-white/20 p-4 md:p-8">
+          <div className="flex items-center mb-4 md:mb-6">
+            <div className="p-2 md:p-3 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg md:rounded-xl mr-3 md:mr-4">
+              <Zap className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <h2 className="text-lg md:text-2xl font-bold text-gray-800">Commission Rates</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+            {/* Level 1 Rate */}
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                <span className="text-xl md:text-2xl font-bold">L1</span>
+              </div>
+              <div className="text-2xl md:text-3xl font-bold mb-2">
+                {settings ? `${settings.referral_l1_percent}%` : '5%'}
+              </div>
+              <div className="text-blue-100 font-medium text-sm md:text-base">Direct Referrals</div>
+              <div className="mt-1 md:mt-2 text-blue-200 text-xs md:text-sm">When your referral invests</div>
+            </div>
+            
+            {/* Level 2 Rate */}
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                <span className="text-xl md:text-2xl font-bold">L2</span>
+              </div>
+              <div className="text-2xl md:text-3xl font-bold mb-2">
+                {settings ? `${settings.referral_l2_percent}%` : '2%'}
+              </div>
+              <div className="text-green-100 font-medium text-sm md:text-base">2nd Level</div>
+              <div className="mt-1 md:mt-2 text-green-200 text-xs md:text-sm">When L1 referral invests</div>
+            </div>
+            
+            {/* Level 3 Rate */}
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                <span className="text-xl md:text-2xl font-bold">L3</span>
+              </div>
+              <div className="text-2xl md:text-3xl font-bold mb-2">
+                {settings ? `${settings.referral_l3_percent}%` : '1%'}
+              </div>
+              <div className="text-purple-100 font-medium text-sm md:text-base">3rd Level</div>
+              <div className="mt-1 md:mt-2 text-purple-200 text-xs md:text-sm">When L2 referral invests</div>
+            </div>
+          </div>
+
+          {/* How it Works Section */}
+          <div className="mt-6 md:mt-8 p-4 md:p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg md:rounded-xl border border-gray-200">
+            <h3 className="text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center">
+              <Star className="w-5 h-5 text-amber-500 mr-2" />
+              How Referral Commissions Work
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 text-sm md:text-base">
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-white text-xs font-bold">1</span>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-800">Share Your Link</p>
+                  <p className="text-gray-600 text-xs md:text-sm">Send your referral link to friends</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-white text-xs font-bold">2</span>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-800">They Invest</p>
+                  <p className="text-gray-600 text-xs md:text-sm">When they make a deposit</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-white text-xs font-bold">3</span>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-800">Earn Commission</p>
+                  <p className="text-gray-600 text-xs md:text-sm">Get instant commission</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

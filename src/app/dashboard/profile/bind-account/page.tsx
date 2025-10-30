@@ -127,6 +127,9 @@ export default function BindAccountPage() {
     )
   }
 
+  // Check if user already has an account bound
+  const hasExistingAccount = profile?.withdrawal_account_type && profile?.withdrawal_account_name && profile?.withdrawal_account_number
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Header */}
@@ -138,9 +141,11 @@ export default function BindAccountPage() {
             </Link>
             <div>
               <h1 className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-                Bind Account
+                {hasExistingAccount ? 'Account Information' : 'Bind Account'}
               </h1>
-              <p className="text-xs text-slate-400">Link your payment accounts</p>
+              <p className="text-xs text-slate-400">
+                {hasExistingAccount ? 'Your linked payment account' : 'Link your payment accounts'}
+              </p>
             </div>
           </div>
         </div>
@@ -162,110 +167,162 @@ export default function BindAccountPage() {
           </div>
         )}
 
-        {/* Account Type Selection */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-xl p-6 border border-white/20">
-          <h2 className="text-lg font-semibold text-white mb-4">Account Type</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {accountTypes.map((type) => (
-              <button
-                key={type.value}
-                onClick={() => setAccountType(type.value)}
-                className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                  accountType === type.value
-                    ? 'border-blue-400 bg-blue-500/20'
-                    : 'border-white/20 bg-white/5 hover:bg-white/10'
-                }`}
-              >
-                <div className="flex flex-col items-center space-y-2">
-                  <type.icon className={`w-6 h-6 ${
-                    accountType === type.value ? 'text-blue-400' : 'text-slate-400'
-                  }`} />
-                  <span className={`text-sm font-medium ${
-                    accountType === type.value ? 'text-blue-400' : 'text-white'
-                  }`}>
-                    {type.label}
-                  </span>
+        {hasExistingAccount ? (
+          /* Show Read-Only Account Info */
+          <>
+            <div className="bg-green-500/20 backdrop-blur-xl rounded-xl p-6 border border-green-500/50">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-green-200">Linked Account</h2>
+                <div className="bg-green-500/30 px-3 py-1 rounded-full">
+                  <span className="text-green-200 text-sm font-medium">✓ Verified</span>
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  {profile.withdrawal_account_type === 'bank' ? (
+                    <Building2 className="w-5 h-5 text-green-400" />
+                  ) : (
+                    <Smartphone className="w-5 h-5 text-green-400" />
+                  )}
+                  <div>
+                    <p className="text-green-100 text-sm">Account Type</p>
+                    <p className="text-white font-medium">{profile.withdrawal_account_type?.toUpperCase()}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CreditCard className="w-5 h-5 text-green-400" />
+                  <div>
+                    <p className="text-green-100 text-sm">Account Holder</p>
+                    <p className="text-white font-medium">{profile.withdrawal_account_name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CreditCard className="w-5 h-5 text-green-400" />
+                  <div>
+                    <p className="text-green-100 text-sm">
+                      {profile.withdrawal_account_type === 'bank' ? 'Account Number' : 'Mobile Number'}
+                    </p>
+                    <p className="text-white font-medium">{profile.withdrawal_account_number}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-        {/* Account Details */}
-        {accountType && (
-          <div className="bg-white/10 backdrop-blur-xl rounded-xl p-6 border border-white/20 space-y-4">
-            <h2 className="text-lg font-semibold text-white mb-4">Account Details</h2>
-            
-            {accountType === 'bank' && (
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Bank Name
-                </label>
-                <input
-                  type="text"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter bank name (e.g., HBL, UBL, MCB)"
-                />
+            <div className="bg-blue-500/20 backdrop-blur-xl rounded-xl p-6 border border-blue-500/50">
+              <div className="flex items-center space-x-3 mb-3">
+                <AlertCircle className="w-5 h-5 text-blue-400" />
+                <h3 className="text-lg font-semibold text-blue-200">Account Security</h3>
+              </div>
+              <p className="text-blue-100 text-sm leading-relaxed">
+                For security reasons, account information cannot be changed once saved. 
+                This ensures the safety of your withdrawals. If you need to update your account details, 
+                please contact customer support.
+              </p>
+            </div>
+          </>
+        ) : (
+          /* Show Form for New Account */
+          <>
+            {/* Account Type Selection */}
+            <div className="bg-white/10 backdrop-blur-xl rounded-xl p-6 border border-white/20">
+              <h2 className="text-lg font-semibold text-white mb-4">Account Type</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {accountTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    onClick={() => setAccountType(type.value)}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                      accountType === type.value
+                        ? 'border-blue-400 bg-blue-500/20'
+                        : 'border-white/20 bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center space-y-2">
+                      <type.icon className={`w-6 h-6 ${
+                        accountType === type.value ? 'text-blue-400' : 'text-slate-400'
+                      }`} />
+                      <span className={`text-sm font-medium ${
+                        accountType === type.value ? 'text-blue-400' : 'text-white'
+                      }`}>
+                        {type.label}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Account Details */}
+            {accountType && (
+              <div className="bg-white/10 backdrop-blur-xl rounded-xl p-6 border border-white/20 space-y-4">
+                <h2 className="text-lg font-semibold text-white mb-4">Account Details</h2>
+                
+                {accountType === 'bank' && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Bank Name
+                    </label>
+                    <input
+                      type="text"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter bank name (e.g., HBL, UBL, MCB)"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Account Holder Name
+                  </label>
+                  <input
+                    type="text"
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter account holder name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    {accountType === 'bank' ? 'Account Number' : 'Mobile Number'}
+                  </label>
+                  <input
+                    type="text"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder={
+                      accountType === 'bank' ? 'Enter account number' : 'Enter mobile number'
+                    }
+                  />
+                </div>
+
+                <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-xl p-4">
+                  <div className="flex items-center space-x-3">
+                    <AlertCircle className="w-5 h-5 text-yellow-400" />
+                    <div>
+                      <p className="text-yellow-200 text-sm font-medium">Important Notice</p>
+                      <p className="text-yellow-100 text-xs mt-1">
+                        Account information cannot be changed once saved. Please double-check all details.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
+                >
+                  <Save className="w-5 h-5" />
+                  <span>{saving ? 'Saving...' : 'Save Account (Permanent)'}</span>
+                </button>
               </div>
             )}
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Account Holder Name
-              </label>
-              <input
-                type="text"
-                value={accountName}
-                onChange={(e) => setAccountName(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter account holder name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                {accountType === 'bank' ? 'Account Number' : 'Mobile Number'}
-              </label>
-              <input
-                type="text"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder={
-                  accountType === 'bank' ? 'Enter account number' : 'Enter mobile number'
-                }
-              />
-            </div>
-
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
-            >
-              <Save className="w-5 h-5" />
-              <span>{saving ? 'Saving...' : 'Save Account'}</span>
-            </button>
-          </div>
-        )}
-
-        {/* Current Account Info */}
-        {profile?.withdrawal_account_type && (
-          <div className="bg-green-500/20 backdrop-blur-xl rounded-xl p-6 border border-green-500/50">
-            <h2 className="text-lg font-semibold text-green-200 mb-4">Current Linked Account</h2>
-            <div className="space-y-2">
-              <p className="text-green-100">
-                <span className="font-medium">Type:</span> {profile.withdrawal_account_type?.toUpperCase()}
-              </p>
-              <p className="text-green-100">
-                <span className="font-medium">Name:</span> {profile.withdrawal_account_name}
-              </p>
-              <p className="text-green-100">
-                <span className="font-medium">Number:</span> {profile.withdrawal_account_number}
-              </p>
-            </div>
-          </div>
+          </>
         )}
       </div>
     </div>
