@@ -57,12 +57,11 @@ export default function LoginPage() {
           {/* Logo */}
           <div className="flex items-center mb-8">
             <div className="relative">
-              <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 mr-4 border border-white/20">
-                <img 
-                  src="/logo.png" 
-                  alt="SmartGrow Mining Logo" 
-                  className="w-8 h-8 rounded-xl"
-                />
+              <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 mr-4 border border-white/20 relative">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-blue-500"></div>
               </div>
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
             </div>
@@ -140,11 +139,12 @@ export default function LoginPage() {
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              <img 
-                src="/logo.png" 
-                alt="SmartGrow Mining Logo" 
-                className="w-10 h-10 rounded-xl"
-              />
+              <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg relative">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-blue-500"></div>
+              </div>
             </motion.div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
               SmartGrow Mining

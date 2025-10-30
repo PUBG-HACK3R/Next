@@ -167,15 +167,22 @@ export default function DashboardHome() {
         <div className="px-6 pt-6">
           {/* Top Navigation */}
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-3">
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-                  Dashboard
-                </h1>
-                <p className="text-xs text-slate-400">Investment Platform</p>
-              </div>
-            </div>
+          </div>
+        </div>
 
+        {/* SmartGrow Icon Section */}
+        <div className="px-6 mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg relative">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-blue-500"></div>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">SmartGrow</h2>
+              <p className="text-xs text-slate-400">Investment Platform</p>
+            </div>
           </div>
         </div>
 
