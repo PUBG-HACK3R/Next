@@ -382,10 +382,10 @@ export default function InvestPage() {
               <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-300">Expected Profit:</span>
-                  <span className="font-bold text-green-400">{formatCurrency(total)}</span>
+                  <span className="font-bold text-green-400">{formatCurrency(profit)}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs text-slate-400 mt-1">
-                  <span>Profit: {formatCurrency(profit)}</span>
+                  <span>Total Capital Return: {formatCurrency(total)}</span>
                   <span>In {plan.duration_days} days</span>
                 </div>
               </div>

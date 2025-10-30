@@ -142,11 +142,11 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <div className="p-4 space-y-6">
         {/* Profile Header Card */}
-        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
+        <div className="rounded-2xl p-6 shadow-xl" style={{background: '#009df2'}}>
           <div className="flex items-center space-x-4">
             {/* Avatar */}
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-2xl font-bold text-green-600">
+              <span className="text-2xl font-bold" style={{color: '#009df2'}}>
                 {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
               </span>
             </div>
@@ -156,7 +156,7 @@ export default function ProfilePage() {
               <h2 className="text-xl font-bold text-white">
                 {profile?.full_name || 'User'}
               </h2>
-              <p className="text-green-100 text-sm">
+              <p className="text-blue-100 text-sm">
                 {profile?.email || user?.email}
               </p>
               <div className="flex items-center mt-2">

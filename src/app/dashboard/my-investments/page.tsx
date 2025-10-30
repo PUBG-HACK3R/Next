@@ -485,8 +485,8 @@ export default function MyInvestmentsPage() {
                       <p className="text-xs font-bold text-gray-900">{investment.plans.duration_days} days</p>
                     </div>
                     <div>
-                      <span className="text-xs text-gray-500 font-medium">Expected Profit</span>
-                      <p className="text-xs font-bold text-blue-600">{formatCurrency(totalReturn)}</p>
+                      <span className="text-xs text-gray-500 font-medium">Total Profit</span>
+                      <p className="text-xs font-bold text-blue-600">{formatCurrency(expectedProfit)}</p>
                     </div>
                   </div>
 

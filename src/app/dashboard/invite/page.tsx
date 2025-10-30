@@ -549,7 +549,7 @@ export default function InvitePage() {
                 {settings ? `${settings.referral_l1_percent}%` : '5%'}
               </div>
               <div className="text-blue-100 font-medium text-sm md:text-base">Direct Referrals</div>
-              <div className="mt-1 md:mt-2 text-blue-200 text-xs md:text-sm">When your referral invests</div>
+              <div className="mt-1 md:mt-2 text-blue-200 text-xs md:text-sm">5% bonus from deposit + 5% from referral earnings</div>
             </div>
             
             {/* Level 2 Rate */}
@@ -561,7 +561,7 @@ export default function InvitePage() {
                 {settings ? `${settings.referral_l2_percent}%` : '2%'}
               </div>
               <div className="text-green-100 font-medium text-sm md:text-base">2nd Level</div>
-              <div className="mt-1 md:mt-2 text-green-200 text-xs md:text-sm">When L1 referral invests</div>
+              <div className="mt-1 md:mt-2 text-green-200 text-xs md:text-sm">3% from referral earnings</div>
             </div>
             
             {/* Level 3 Rate */}
@@ -573,46 +573,10 @@ export default function InvitePage() {
                 {settings ? `${settings.referral_l3_percent}%` : '1%'}
               </div>
               <div className="text-purple-100 font-medium text-sm md:text-base">3rd Level</div>
-              <div className="mt-1 md:mt-2 text-purple-200 text-xs md:text-sm">When L2 referral invests</div>
+              <div className="mt-1 md:mt-2 text-purple-200 text-xs md:text-sm">2% from referral earnings</div>
             </div>
           </div>
 
-          {/* How it Works Section */}
-          <div className="mt-6 md:mt-8 p-4 md:p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg md:rounded-xl border border-gray-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center">
-              <Star className="w-5 h-5 text-amber-500 mr-2" />
-              How Referral Commissions Work
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 text-sm md:text-base">
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-white text-xs font-bold">1</span>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-800">Share Your Link</p>
-                  <p className="text-gray-600 text-xs md:text-sm">Send your referral link to friends</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-white text-xs font-bold">2</span>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-800">They Invest</p>
-                  <p className="text-gray-600 text-xs md:text-sm">When they make a deposit</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-white text-xs font-bold">3</span>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-800">Earn Commission</p>
-                  <p className="text-gray-600 text-xs md:text-sm">Get instant commission</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Referral Program Summary Card */}
