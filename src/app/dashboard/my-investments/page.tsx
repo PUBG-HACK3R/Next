@@ -461,17 +461,17 @@ export default function MyInvestmentsPage() {
                 : expectedProfit
 
               return (
-                <div key={investment.id} className="bg-white rounded-lg p-4 border-l-4 border-blue-500 shadow-md hover:shadow-lg transition-shadow duration-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-lg font-extrabold text-gray-800">{investment.plans.name}</h4>
+                <div key={investment.id} className="bg-white rounded-lg p-3 border-l-4 border-blue-500 shadow-md hover:shadow-lg transition-shadow duration-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-base font-bold text-gray-800">{investment.plans.name}</h4>
                     <span className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(investment.status)}`}>
                       {getStatusIcon(investment.status)}
                       <span className="capitalize">{investment.status}</span>
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 mb-4">Started on {formatDate(investment.start_date)}</p>
+                  <p className="text-xs text-gray-500 mb-3">Started on {formatDate(investment.start_date)}</p>
 
-                  <div className="grid grid-cols-4 gap-1 mb-3 text-xs">
+                  <div className="grid grid-cols-4 gap-1 mb-2 text-xs">
                     <div>
                       <span className="text-xs text-gray-500 font-medium">Investment Amount</span>
                       <p className="text-xs font-bold text-gray-900">{formatCurrency(investment.amount_invested)}</p>
@@ -493,35 +493,28 @@ export default function MyInvestmentsPage() {
                   {/* Daily Income Collection - Compact */}
                   {investment.status === 'active' && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-2 mb-2">
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center justify-between">
                         <div>
-                          <h5 className="text-xs font-medium text-blue-900">Daily Income Collection</h5>
-                          <p className="text-xs text-blue-700">
-                            Daily Profit: {formatCurrency(investment.daily_profit_amount || (investment.amount_invested * investment.plans.profit_percent / 100) / investment.plans.duration_days)}
-                          </p>
+                          <h5 className="text-xs font-medium text-blue-900">Daily Profit: {formatCurrency(investment.daily_profit_amount || (investment.amount_invested * investment.plans.profit_percent / 100) / investment.plans.duration_days)}</h5>
                         </div>
                         <button
                           onClick={() => collectDailyIncome(investment.id)}
                           disabled={!canCollectToday(investment) || collectingIncome === investment.id}
-                          className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                          className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${
                             canCollectToday(investment) && collectingIncome !== investment.id
-                              ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl'
                               : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <TrendingUp className="w-4 h-4" />
-                          <span>{collectingIncome === investment.id ? 'Collecting...' : 'Collect Profit'}</span>
+                          <TrendingUp className="w-3 h-3" />
+                          <span>{collectingIncome === investment.id ? 'Collecting...' : 'Collect'}</span>
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-1 text-xs">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-blue-600">Days Collected:</span>
                           <span className="font-medium ml-1">{investment.total_days_collected || 0} / {investment.plans.duration_days}</span>
-                        </div>
-                        <div>
-                          <span className="text-blue-600">Available Days:</span>
-                          <span className="font-medium text-green-600 ml-1">{calculateAvailableDays(investment)} days</span>
                         </div>
                         <div>
                           <span className="text-blue-600">Last Collection:</span>
@@ -532,29 +525,22 @@ export default function MyInvestmentsPage() {
                             }
                           </span>
                         </div>
-                        <div>
-                          <span className="text-blue-600">Potential Earnings:</span>
-                          <span className="font-medium text-green-600 ml-1">
-                            {formatCurrency((investment.daily_profit_amount || (investment.amount_invested * investment.plans.profit_percent / 100) / investment.plans.duration_days) * calculateAvailableDays(investment))}
-                          </span>
-                        </div>
                       </div>
                     </div>
                   )}
 
                   {investment.status === 'active' && investment.end_date && (
-                    <div className="mb-2">
+                    <div className="mb-1">
                       <div className="flex items-center justify-between text-xs mb-1">
                         <span className="text-gray-600">Progress</span>
                         <span className="text-gray-900 font-medium">{daysRemaining} days remaining</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div className="w-full bg-gray-200 rounded-full h-1">
                         <div 
-                          className="bg-green-600 h-1.5 rounded-full transition-all duration-300"
+                          className="bg-green-600 h-1 rounded-full transition-all duration-300"
                           style={{ width: `${progress}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Ends on {formatDate(investment.end_date)}</p>
                     </div>
                   )}
 
