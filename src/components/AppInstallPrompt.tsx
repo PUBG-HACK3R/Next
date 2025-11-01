@@ -162,9 +162,6 @@ export default function AppInstallPrompt({ showOnPages = ['login', 'signup', 'da
               <h3 className="text-white font-semibold text-sm">
                 Install SmartGrow App
               </h3>
-              <p className="text-blue-100 text-xs mt-1">
-                Get faster access and never lose your login session!
-              </p>
               
               <div className="flex space-x-2 mt-3">
                 <button
@@ -208,9 +205,6 @@ export default function AppInstallPrompt({ showOnPages = ['login', 'signup', 'da
               <h3 className="text-white font-semibold text-sm">
                 Install SmartGrow App
               </h3>
-              <p className="text-blue-100 text-xs mt-1">
-                Quick access from your desktop. Stay logged in!
-              </p>
               
               <div className="flex space-x-2 mt-3">
                 <button
