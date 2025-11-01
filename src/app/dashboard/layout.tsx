@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getCurrentUser, signOut } from '@/lib/auth'
 import { Home, TrendingUp, Wallet, User, Users, LogOut } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
+import AppInstallPrompt from '@/components/AppInstallPrompt'
 
 
 export default function DashboardLayout({
@@ -138,6 +139,9 @@ export default function DashboardLayout({
 
       {/* Floating WhatsApp Support */}
       <WhatsAppSupport variant="floating" />
+
+      {/* App Install Prompt */}
+      <AppInstallPrompt showOnPages={['dashboard']} />
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { signUp } from '@/lib/auth'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Sparkles, ArrowRight, Shield, TrendingUp, Users, Gift, HelpCircle } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
+import AppInstallPrompt from '@/components/AppInstallPrompt'
 
 function SignupForm() {
   const [fullName, setFullName] = useState('')
@@ -408,6 +409,9 @@ function SignupForm() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* App Install Prompt */}
+      <AppInstallPrompt showOnPages={['signup']} />
     </div>
   )
 }

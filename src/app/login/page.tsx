@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { Eye, EyeOff, Sparkles, ArrowRight, Shield, TrendingUp, Users, HelpCircle } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
 import WelcomePopup from '@/components/WelcomePopup'
+import AppInstallPrompt from '@/components/AppInstallPrompt'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -285,6 +286,9 @@ export default function LoginPage() {
         onClose={handleCloseWelcomePopup}
         userName={userName}
       />
+
+      {/* App Install Prompt */}
+      <AppInstallPrompt showOnPages={['login']} />
     </div>
   )
 }
