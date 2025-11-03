@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase'
 import { getCurrentUser, getUserProfile } from '@/lib/auth'
 import { ArrowLeft, AlertCircle, CheckCircle, CreditCard, HelpCircle } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
+import WithdrawalStatus from '@/components/WithdrawalStatus'
+import WithdrawalOverlay from '@/components/WithdrawalOverlay'
 
 interface UserProfile {
   id: string
@@ -31,6 +33,13 @@ export default function WithdrawPage() {
   const [pageLoading, setPageLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [withdrawalAllowed, setWithdrawalAllowed] = useState(true)
+  const [currentTime, setCurrentTime] = useState<string>('')
+  const [withdrawalSchedule, setWithdrawalSchedule] = useState({
+    startTime: '11:00:00',
+    endTime: '20:00:00',
+    allowedDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  })
   const router = useRouter()
 
   useEffect(() => {
@@ -79,6 +88,12 @@ export default function WithdrawPage() {
 
     if (!user || !profile) {
       setError('User not authenticated')
+      setLoading(false)
+      return
+    }
+
+    if (!withdrawalAllowed) {
+      setError('Withdrawals are not available at this time. Please check the withdrawal schedule.')
       setLoading(false)
       return
     }
@@ -204,16 +219,37 @@ export default function WithdrawPage() {
 
   return (
     <div className="p-4">
-      {/* Header */}
-      <div className="flex items-center mb-6">
+      {/* Withdrawal Overlay */}
+      <WithdrawalOverlay 
+        isVisible={!withdrawalAllowed} 
+        currentTime={currentTime}
+        startTime={withdrawalSchedule.startTime}
+        endTime={withdrawalSchedule.endTime}
+        allowedDays={withdrawalSchedule.allowedDays}
+      />
+      
+      {/* Main Content with conditional transparency */}
+      <div className={`${!withdrawalAllowed ? 'opacity-30 pointer-events-none' : ''}`}>
+        {/* Header */}
+        <div className="flex items-center mb-6">
         <Link href="/dashboard" className="mr-3">
           <ArrowLeft className="w-6 h-6 text-gray-600" />
         </Link>
         <h1 className="text-xl font-bold text-gray-900">Withdraw Funds</h1>
       </div>
 
+      {/* Withdrawal Status */}
+      <WithdrawalStatus 
+        onStatusChange={(allowed, time, schedule) => {
+          setWithdrawalAllowed(allowed)
+          if (time) setCurrentTime(time)
+          if (schedule) setWithdrawalSchedule(schedule)
+        }}
+        showDetails={true}
+      />
+
       {/* Balance Display */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white mb-6">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white mb-6 mt-6">
         <h3 className="text-lg font-semibold mb-2">Available Balance</h3>
         <p className="text-3xl font-bold">{profile ? formatCurrency(profile.balance) : 'PKR 0.00'}</p>
       </div>
@@ -251,8 +287,20 @@ export default function WithdrawPage() {
 
       {/* Withdrawal Form */}
       {profile?.withdrawal_account_type && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${!withdrawalAllowed ? 'opacity-60' : ''}`}>
           <h3 className="font-semibold text-gray-900 mb-4">Withdrawal Request</h3>
+          
+          {!withdrawalAllowed && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center">
+                <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+                <span className="text-red-700 font-medium">Withdrawals are currently not available</span>
+              </div>
+              <p className="text-red-600 text-sm mt-1">
+                Please check the withdrawal schedule above for available times.
+              </p>
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -268,7 +316,8 @@ export default function WithdrawPage() {
                 min={settings?.min_withdrawal_amount || 100}
                 max={profile.balance}
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={!withdrawalAllowed}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder={`Enter withdrawal amount (Min: PKR ${settings?.min_withdrawal_amount || 100})`}
               />
               <div className="text-xs text-gray-500 mt-1 space-y-1">
@@ -323,10 +372,10 @@ export default function WithdrawPage() {
 
             <button
               type="submit"
-              disabled={loading || !profile?.withdrawal_account_type}
+              disabled={loading || !profile?.withdrawal_account_type || !withdrawalAllowed}
               className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Processing...' : 'Submit Withdrawal Request'}
+              {loading ? 'Processing...' : !withdrawalAllowed ? 'Withdrawals Not Available' : 'Submit Withdrawal Request'}
             </button>
           </form>
         </div>
@@ -345,6 +394,7 @@ export default function WithdrawPage() {
           <WhatsAppSupport variant="button" />
         </div>
       </div>
+      </div> {/* Close main content wrapper */}
     </div>
   )
 }

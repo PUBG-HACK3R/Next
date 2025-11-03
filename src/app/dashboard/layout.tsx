@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { getCurrentUser, signOut } from '@/lib/auth'
-import { Home, TrendingUp, Wallet, User, Users, LogOut } from 'lucide-react'
+import { Home, TrendingUp, Wallet, User, Users, LogOut, Crown } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
 import AppInstallPrompt from '@/components/AppInstallPrompt'
 
@@ -58,12 +58,12 @@ export default function DashboardLayout({
     { 
       href: '/dashboard/invite', 
       icon: Users, 
-      label: 'Referral Program'  // Referral program page
+      label: 'Referral Program'
     },
     { 
       href: '/dashboard/profile', 
       icon: User, 
-      label: 'Profile'    // Profile page
+      label: 'Profile'
     }
   ], [])
 

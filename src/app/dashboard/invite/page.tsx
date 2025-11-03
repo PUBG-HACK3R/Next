@@ -22,8 +22,10 @@ import {
   ChevronDown,
   Star,
   Trophy,
-  Zap
+  Zap,
+  Crown
 } from 'lucide-react'
+import AgentEligibilityCard from '@/components/AgentEligibilityCard'
 
 interface UserProfile {
   id: string
@@ -530,177 +532,153 @@ export default function InvitePage() {
           </div>
         </div>
 
-        {/* Commission Rates Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-lg border border-white/20 p-4 md:p-8">
-          <div className="flex items-center mb-4 md:mb-6">
-            <div className="p-2 md:p-3 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg md:rounded-xl mr-3 md:mr-4">
-              <Zap className="w-5 h-5 md:w-6 md:h-6 text-white" />
+        {/* Commission Rates Card - Compact */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">
+          <div className="flex items-center mb-4">
+            <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg mr-3">
+              <DollarSign className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-lg md:text-2xl font-bold text-gray-800">Commission Rates</h2>
+            <h2 className="text-lg font-bold text-gray-800">Level Commissions</h2>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+          <div className="space-y-3">
             {/* Level 1 Rate */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-                <span className="text-xl md:text-2xl font-bold">L1</span>
+            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                  <span className="text-white font-bold text-sm">L1</span>
+                </div>
+                <div>
+                  <span className="text-gray-700 font-medium text-sm">Level 1</span>
+                  <div className="text-blue-500 text-xs font-medium">{settings ? `${settings.referral_l1_percent}%` : '5%'} commission</div>
+                  <div className="text-gray-500 text-xs">5% deposit + 5% earning</div>
+                </div>
               </div>
-              <div className="text-2xl md:text-3xl font-bold mb-2">
-                {settings ? `${settings.referral_l1_percent}%` : '5%'}
+              <div className="text-right">
+                <div className="text-lg font-bold text-blue-600">{formatCurrency(stats.level1Earnings)}</div>
+                <div className="text-blue-500 text-xs">Direct referrals</div>
               </div>
-              <div className="text-blue-100 font-medium text-sm md:text-base">Direct Referrals</div>
-              <div className="mt-1 md:mt-2 text-blue-200 text-xs md:text-sm">5% bonus from deposit + 5% from referral earnings</div>
             </div>
             
             {/* Level 2 Rate */}
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-                <span className="text-xl md:text-2xl font-bold">L2</span>
+            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                  <span className="text-white font-bold text-sm">L2</span>
+                </div>
+                <div>
+                  <span className="text-gray-700 font-medium text-sm">Level 2</span>
+                  <div className="text-green-500 text-xs font-medium">{settings ? `${settings.referral_l2_percent}%` : '3%'} commission</div>
+                </div>
               </div>
-              <div className="text-2xl md:text-3xl font-bold mb-2">
-                {settings ? `${settings.referral_l2_percent}%` : '2%'}
+              <div className="text-right">
+                <div className="text-lg font-bold text-green-600">{formatCurrency(stats.level2Earnings)}</div>
+                <div className="text-green-500 text-xs">2nd level referrals</div>
               </div>
-              <div className="text-green-100 font-medium text-sm md:text-base">2nd Level</div>
-              <div className="mt-1 md:mt-2 text-green-200 text-xs md:text-sm">3% from referral earnings</div>
             </div>
             
             {/* Level 3 Rate */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-                <span className="text-xl md:text-2xl font-bold">L3</span>
-              </div>
-              <div className="text-2xl md:text-3xl font-bold mb-2">
-                {settings ? `${settings.referral_l3_percent}%` : '1%'}
-              </div>
-              <div className="text-purple-100 font-medium text-sm md:text-base">3rd Level</div>
-              <div className="mt-1 md:mt-2 text-purple-200 text-xs md:text-sm">2% from referral earnings</div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Referral Program Summary Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-lg border border-white/20 p-4 md:p-8">
-          <div className="flex items-center mb-4 md:mb-6">
-            <div className="p-2 md:p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg md:rounded-xl mr-3 md:mr-4">
-              <Trophy className="w-5 h-5 md:w-6 md:h-6 text-white" />
-            </div>
-            <h2 className="text-lg md:text-2xl font-bold text-gray-800">Referral Program</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg md:rounded-xl p-4 md:p-6 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-green-100 text-sm md:text-base">Today Commission</span>
-                <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5 text-green-200" />
-              </div>
-              <div className="text-2xl md:text-3xl font-bold">{formatCurrency(stats.todayEarnings)}</div>
-              <div className="text-green-200 text-xs md:text-sm mt-1">Real-time data</div>
-            </div>
-            
-            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg md:rounded-xl p-4 md:p-6 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-blue-100 text-sm md:text-base">Yesterday Commission</span>
-                <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-blue-200" />
-              </div>
-              <div className="text-2xl md:text-3xl font-bold">{formatCurrency(stats.yesterdayEarnings)}</div>
-              <div className="text-blue-200 text-xs md:text-sm mt-1">Previous day</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Commission Earnings Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-lg border border-white/20 p-4 md:p-8">
-          <div className="flex items-center mb-4 md:mb-6">
-            <div className="p-2 md:p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg md:rounded-xl mr-3 md:mr-4">
-              <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-white" />
-            </div>
-            <h2 className="text-lg md:text-2xl font-bold text-gray-800">Level Commissions</h2>
-          </div>
-          
-          <div className="space-y-3 md:space-y-4">
-            <div className="flex items-center justify-between p-3 md:p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg md:rounded-xl border border-blue-200">
+            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border border-purple-200">
               <div className="flex items-center">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3 md:mr-4">
-                  <span className="text-white font-bold text-sm md:text-base">L1</span>
+                <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
+                  <span className="text-white font-bold text-sm">L3</span>
                 </div>
                 <div>
-                  <span className="text-gray-700 font-medium text-sm md:text-base">Level 1</span>
-                  {settings && (
-                    <div className="text-blue-500 text-xs md:text-sm font-medium">{settings.referral_l1_percent}% commission</div>
-                  )}
+                  <span className="text-gray-700 font-medium text-sm">Level 3</span>
+                  <div className="text-purple-500 text-xs font-medium">{settings ? `${settings.referral_l3_percent}%` : '2%'} commission</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg md:text-2xl font-bold text-blue-600">{formatCurrency(stats.level1Earnings)}</div>
-                <div className="text-blue-500 text-xs md:text-sm">Direct referrals</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 md:p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg md:rounded-xl border border-green-200">
-              <div className="flex items-center">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-green-500 rounded-lg flex items-center justify-center mr-3 md:mr-4">
-                  <span className="text-white font-bold text-sm md:text-base">L2</span>
-                </div>
-                <div>
-                  <span className="text-gray-700 font-medium text-sm md:text-base">Level 2</span>
-                  {settings && (
-                    <div className="text-green-500 text-xs md:text-sm font-medium">{settings.referral_l2_percent}% commission</div>
-                  )}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-lg md:text-2xl font-bold text-green-600">{formatCurrency(stats.level2Earnings)}</div>
-                <div className="text-green-500 text-xs md:text-sm">2nd level referrals</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 md:p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg md:rounded-xl border border-purple-200">
-              <div className="flex items-center">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-3 md:mr-4">
-                  <span className="text-white font-bold text-sm md:text-base">L3</span>
-                </div>
-                <div>
-                  <span className="text-gray-700 font-medium text-sm md:text-base">Level 3</span>
-                  {settings && (
-                    <div className="text-purple-500 text-xs md:text-sm font-medium">{settings.referral_l3_percent}% commission</div>
-                  )}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-lg md:text-2xl font-bold text-purple-600">{formatCurrency(stats.level3Earnings)}</div>
-                <div className="text-purple-500 text-xs md:text-sm">3rd level referrals</div>
+                <div className="text-lg font-bold text-purple-600">{formatCurrency(stats.level3Earnings)}</div>
+                <div className="text-purple-500 text-xs">3rd level referrals</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Active Referrals Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl md:rounded-2xl shadow-lg border border-white/20 p-4 md:p-8">
-          <div className="flex items-center mb-4 md:mb-6">
-            <div className="p-2 md:p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg md:rounded-xl mr-3 md:mr-4">
-              <Users className="w-5 h-5 md:w-6 md:h-6 text-white" />
+        {/* Agent Program Card - Compact */}
+        {user && (
+          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl p-4 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
+                  <Crown className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Agent Program</h3>
+                  <p className="text-yellow-100 text-xs">
+                    ₨50,000 bonus + weekly salary + 2% commission
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => window.location.href = '/dashboard/agent-program'}
+                className="bg-white text-orange-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 flex items-center space-x-1 text-sm"
+              >
+                <span>Details</span>
+                <ArrowUpRight className="w-4 h-4" />
+              </button>
             </div>
-            <h2 className="text-lg md:text-2xl font-bold text-gray-800">Active Referrals</h2>
+          </div>
+        )}
+
+        {/* Referral Program Summary Card - Compact */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">
+          <div className="flex items-center mb-4">
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg mr-3">
+              <Trophy className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-800">Referral Program</h2>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
-              <div className="text-3xl md:text-4xl font-bold mb-2">{stats.level1Count}</div>
-              <div className="text-blue-100 font-medium text-sm md:text-base">L1 Active</div>
-              <div className="mt-1 md:mt-2 text-blue-200 text-xs md:text-sm">Direct referrals</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-3 text-white">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-green-100 text-xs">Today</span>
+                <ArrowUpRight className="w-3 h-3 text-green-200" />
+              </div>
+              <div className="text-lg font-bold">{formatCurrency(stats.todayEarnings)}</div>
+              <div className="text-green-200 text-xs">Commission</div>
             </div>
             
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
-              <div className="text-3xl md:text-4xl font-bold mb-2">{stats.level2Count.toString().padStart(2, '0')}</div>
-              <div className="text-green-100 font-medium text-sm md:text-base">L2 Active</div>
-              <div className="mt-1 md:mt-2 text-green-200 text-xs md:text-sm">2nd level referrals</div>
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg p-3 text-white">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-blue-100 text-xs">Yesterday</span>
+                <TrendingUp className="w-3 h-3 text-blue-200" />
+              </div>
+              <div className="text-lg font-bold">{formatCurrency(stats.yesterdayEarnings)}</div>
+              <div className="text-blue-200 text-xs">Commission</div>
+            </div>
+          </div>
+        </div>
+
+
+        {/* Active Referrals Card - Compact */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">
+          <div className="flex items-center mb-4">
+            <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg mr-3">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-800">Active Referrals</h2>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-3 text-white text-center">
+              <div className="text-2xl font-bold mb-1">{stats.level1Count}</div>
+              <div className="text-blue-100 font-medium text-xs">L1 Active</div>
+              <div className="text-blue-200 text-xs">Direct</div>
             </div>
             
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 text-white text-center">
-              <div className="text-3xl md:text-4xl font-bold mb-2">{stats.level3Count.toString().padStart(2, '0')}</div>
-              <div className="text-purple-100 font-medium text-sm md:text-base">L3 Active</div>
-              <div className="mt-1 md:mt-2 text-purple-200 text-xs md:text-sm">3rd level referrals</div>
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-3 text-white text-center">
+              <div className="text-2xl font-bold mb-1">{stats.level2Count.toString().padStart(2, '0')}</div>
+              <div className="text-green-100 font-medium text-xs">L2 Active</div>
+              <div className="text-green-200 text-xs">2nd level</div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-3 text-white text-center">
+              <div className="text-2xl font-bold mb-1">{stats.level3Count.toString().padStart(2, '0')}</div>
+              <div className="text-purple-100 font-medium text-xs">L3 Active</div>
+              <div className="text-purple-200 text-xs">3rd level</div>
             </div>
           </div>
         </div>

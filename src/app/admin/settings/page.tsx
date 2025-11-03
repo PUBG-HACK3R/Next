@@ -8,7 +8,11 @@ import {
   Users, 
   CreditCard,
   RefreshCw,
-  MessageCircle
+  MessageCircle,
+  Clock,
+  Calendar,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react'
 
 interface AdminSettings {
@@ -31,6 +35,11 @@ interface AdminSettings {
   announcement_title: string
   announcement_text: string
   announcement_type: 'info' | 'warning' | 'success' | 'error'
+  withdrawal_enabled: boolean
+  withdrawal_start_time: string
+  withdrawal_end_time: string
+  withdrawal_days_enabled: string
+  withdrawal_auto_schedule: boolean
   deposit_details: {
     bank: {
       name: string
@@ -83,6 +92,15 @@ export default function AdminSettingsPage() {
     {name: 'BEP20', network: 'BSC', enabled: true},
     {name: 'Arbitrum', network: 'Arbitrum One', enabled: true}
   ])
+  
+  // Withdrawal time settings
+  const [withdrawalEnabled, setWithdrawalEnabled] = useState(true)
+  const [withdrawalAutoSchedule, setWithdrawalAutoSchedule] = useState(true)
+  const [withdrawalStartTime, setWithdrawalStartTime] = useState('11:00')
+  const [withdrawalEndTime, setWithdrawalEndTime] = useState('20:00')
+  const [withdrawalDays, setWithdrawalDays] = useState<string[]>([
+    'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'
+  ])
 
   useEffect(() => {
     fetchSettings()
@@ -123,6 +141,19 @@ export default function AdminSettingsPage() {
         if (data.usdt_chains) {
           setUsdtChains(data.usdt_chains)
         }
+        
+        // Withdrawal time settings
+        setWithdrawalEnabled(data.withdrawal_enabled ?? true)
+        setWithdrawalAutoSchedule(data.withdrawal_auto_schedule ?? true)
+        if (data.withdrawal_start_time) {
+          setWithdrawalStartTime(data.withdrawal_start_time.substring(0, 5))
+        }
+        if (data.withdrawal_end_time) {
+          setWithdrawalEndTime(data.withdrawal_end_time.substring(0, 5))
+        }
+        if (data.withdrawal_days_enabled) {
+          setWithdrawalDays(data.withdrawal_days_enabled.split(','))
+        }
       }
     } catch (error: any) {
       console.error('Error fetching settings:', error)
@@ -157,6 +188,11 @@ export default function AdminSettingsPage() {
         announcement_title: settings?.announcement_title || '',
         announcement_text: settings?.announcement_text || '',
         announcement_type: settings?.announcement_type || 'info',
+        withdrawal_enabled: withdrawalEnabled,
+        withdrawal_auto_schedule: withdrawalAutoSchedule,
+        withdrawal_start_time: withdrawalStartTime + ':00',
+        withdrawal_end_time: withdrawalEndTime + ':00',
+        withdrawal_days_enabled: withdrawalDays.join(','),
         deposit_details: {
           bank: {
             name: bankName,
@@ -650,6 +686,155 @@ export default function AdminSettingsPage() {
                     </label>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Withdrawal Time Restrictions */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center mb-6">
+            <Clock className="w-6 h-6 text-purple-600 mr-3" />
+            <h2 className="text-xl font-semibold text-gray-900">Withdrawal Time Restrictions</h2>
+          </div>
+
+          <div className="space-y-6">
+            {/* Master Toggle */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-gray-800">Withdrawal System</h3>
+                  <p className="text-sm text-gray-600">Enable or disable all withdrawals</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setWithdrawalEnabled(!withdrawalEnabled)}
+                  className="flex items-center space-x-2"
+                >
+                  {withdrawalEnabled ? (
+                    <ToggleRight className="w-8 h-8 text-green-500" />
+                  ) : (
+                    <ToggleLeft className="w-8 h-8 text-gray-400" />
+                  )}
+                </button>
+              </div>
+              <div className={`text-sm font-medium ${
+                withdrawalEnabled ? 'text-green-600' : 'text-red-600'
+              }`}>
+                Status: {withdrawalEnabled ? 'Enabled' : 'Disabled'}
+              </div>
+            </div>
+
+            {/* Auto Schedule Toggle */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-gray-800">Auto Schedule</h3>
+                  <p className="text-sm text-gray-600">Automatically restrict withdrawals by time and day</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setWithdrawalAutoSchedule(!withdrawalAutoSchedule)}
+                  className="flex items-center space-x-2"
+                >
+                  {withdrawalAutoSchedule ? (
+                    <ToggleRight className="w-8 h-8 text-blue-500" />
+                  ) : (
+                    <ToggleLeft className="w-8 h-8 text-gray-400" />
+                  )}
+                </button>
+              </div>
+              <div className={`text-sm font-medium ${
+                withdrawalAutoSchedule ? 'text-blue-600' : 'text-gray-600'
+              }`}>
+                {withdrawalAutoSchedule 
+                  ? 'Time restrictions active' 
+                  : 'Manual control only (24/7 when enabled)'}
+              </div>
+            </div>
+
+            {/* Time Settings */}
+            {withdrawalAutoSchedule && (
+              <div className="border border-gray-200 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-800 mb-4 flex items-center">
+                  <Clock className="w-5 h-5 mr-2" />
+                  Time Settings
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Start Time (Pakistani Time)
+                    </label>
+                    <input
+                      type="time"
+                      value={withdrawalStartTime}
+                      onChange={(e) => setWithdrawalStartTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      End Time (Pakistani Time)
+                    </label>
+                    <input
+                      type="time"
+                      value={withdrawalEndTime}
+                      onChange={(e) => setWithdrawalEndTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Allowed Days
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {[
+                      { key: 'monday', label: 'Monday' },
+                      { key: 'tuesday', label: 'Tuesday' },
+                      { key: 'wednesday', label: 'Wednesday' },
+                      { key: 'thursday', label: 'Thursday' },
+                      { key: 'friday', label: 'Friday' },
+                      { key: 'saturday', label: 'Saturday' },
+                      { key: 'sunday', label: 'Sunday' }
+                    ].map(day => (
+                      <label key={day.key} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={withdrawalDays.includes(day.key)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setWithdrawalDays([...withdrawalDays, day.key])
+                            } else {
+                              setWithdrawalDays(withdrawalDays.filter(d => d !== day.key))
+                            }
+                          }}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{day.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Current Status Display */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="font-semibold text-gray-800 mb-2">Current Configuration</h3>
+              <div className="text-sm text-gray-600 space-y-1">
+                <div>System: <span className="font-medium">{withdrawalEnabled ? 'Enabled' : 'Disabled'}</span></div>
+                <div>Auto Schedule: <span className="font-medium">{withdrawalAutoSchedule ? 'Active' : 'Inactive'}</span></div>
+                {withdrawalAutoSchedule && (
+                  <>
+                    <div>Hours: <span className="font-medium">{withdrawalStartTime} - {withdrawalEndTime} (Pakistani Time)</span></div>
+                    <div>Days: <span className="font-medium">{withdrawalDays.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ')}</span></div>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -16,8 +16,10 @@ import {
   Info,
   MessageCircle,
   Share2,
-  LogOut
+  LogOut,
+  Crown
 } from 'lucide-react'
+import AgentEligibilityCard from '@/components/AgentEligibilityCard'
 
 interface UserProfile {
   id: string
@@ -93,6 +95,12 @@ export default function ProfilePage() {
 
   const menuItems = [
     {
+      icon: Crown,
+      title: 'Agent Program',
+      href: '/dashboard/agent-program',
+      description: 'Become an agent and earn exclusive rewards'
+    },
+    {
       icon: LinkIcon,
       title: 'Bind Account',
       href: '/dashboard/profile/bind-account',
@@ -167,6 +175,11 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Agent Program Status */}
+        {user && (
+          <AgentEligibilityCard userId={user.id} compact={true} />
+        )}
 
         {/* All Menu Items */}
         <div className="space-y-4">
