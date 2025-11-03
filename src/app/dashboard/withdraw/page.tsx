@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -72,6 +72,17 @@ export default function WithdrawPage() {
 
     fetchData()
   }, [router])
+
+  // Memoized callback to prevent infinite loops
+  const handleStatusChange = useCallback((allowed: boolean, time?: string, schedule?: {
+    startTime: string,
+    endTime: string,
+    allowedDays: string[]
+  }) => {
+    setWithdrawalAllowed(allowed)
+    if (time) setCurrentTime(time)
+    if (schedule) setWithdrawalSchedule(schedule)
+  }, [])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PK', {
@@ -240,11 +251,7 @@ export default function WithdrawPage() {
 
       {/* Withdrawal Status */}
       <WithdrawalStatus 
-        onStatusChange={(allowed, time, schedule) => {
-          setWithdrawalAllowed(allowed)
-          if (time) setCurrentTime(time)
-          if (schedule) setWithdrawalSchedule(schedule)
-        }}
+        onStatusChange={handleStatusChange}
         showDetails={true}
       />
 

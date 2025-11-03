@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Clock, CheckCircle, XCircle, Calendar, AlertCircle } from 'lucide-react'
 
 interface WithdrawalStatus {
@@ -31,6 +31,7 @@ export default function WithdrawalStatus({ onStatusChange, showDetails = true }:
   const [status, setStatus] = useState<WithdrawalStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const previousStatusRef = useRef<string | null>(null)
 
   useEffect(() => {
     fetchWithdrawalStatus()
@@ -53,15 +54,22 @@ export default function WithdrawalStatus({ onStatusChange, showDetails = true }:
 
   useEffect(() => {
     if (status && onStatusChange) {
-      onStatusChange(
-        status.withdrawal_allowed, 
-        status.current_time_pk,
-        {
-          startTime: status.allowed_hours.start,
-          endTime: status.allowed_hours.end,
-          allowedDays: status.allowed_days
-        }
-      )
+      // Create a unique key for the current status to detect changes
+      const statusKey = `${status.withdrawal_allowed}-${status.current_time_pk}-${status.allowed_hours.start}-${status.allowed_hours.end}-${status.allowed_days.join(',')}`
+      
+      // Only call onStatusChange if the status has actually changed
+      if (previousStatusRef.current !== statusKey) {
+        previousStatusRef.current = statusKey
+        onStatusChange(
+          status.withdrawal_allowed, 
+          status.current_time_pk,
+          {
+            startTime: status.allowed_hours.start,
+            endTime: status.allowed_hours.end,
+            allowedDays: status.allowed_days
+          }
+        )
+      }
     }
   }, [status, onStatusChange])
 
