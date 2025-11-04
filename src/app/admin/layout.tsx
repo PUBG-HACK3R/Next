@@ -17,6 +17,8 @@ import {
   Trophy
 } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
+import ModernHeader from '@/components/ModernHeader'
+import ModernNavigation from '@/components/ModernNavigation'
 import './admin-dark.css'
 
 interface UserProfile {
@@ -87,91 +89,47 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex">
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-800/90 backdrop-blur-xl border-r border-white/10 shadow-2xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-white/10">
-          <h1 className="text-lg font-bold text-white">Admin Panel</h1>
-          <button
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      {/* Modern Header for Mobile */}
+      <div className="lg:hidden">
+        <ModernHeader 
+          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+          showMenuButton={true}
+          title="Admin Panel"
+          subtitle="Management Dashboard"
+        />
+      </div>
+
+      <div className="flex">
+        {/* Modern Sidebar Navigation */}
+        <div className={`fixed inset-y-0 left-0 z-50 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+          <ModernNavigation variant="sidebar" isAdmin={true} />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 lg:ml-0">
+          {/* Desktop Header */}
+          <div className="hidden lg:block">
+            <ModernHeader 
+              title="Admin Panel"
+              subtitle="Management Dashboard"
+            />
+          </div>
+
+          {/* Page Content */}
+          <main className="p-6 bg-slate-900/50 min-h-screen">
+            {children}
+          </main>
+        </div>
+
+        {/* Sidebar Overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-white/80 hover:text-white"
-          >
-            <X size={24} />
-          </button>
-        </div>
-        
-        <nav className="mt-6">
-          {navItems.map(({ href, icon: Icon, label }) => {
-            const isActive = pathname === href
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center px-6 py-3 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-blue-500/20 text-blue-300 border-r-2 border-blue-400'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <Icon size={20} className="mr-3" />
-                {label}
-              </Link>
-            )
-          })}
-        </nav>
-
-        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-white/10">
-          <div className="flex items-center mb-4">
-            <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center border border-blue-400/30">
-              <span className="text-sm font-medium text-blue-300">
-                {profile?.full_name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-white">{profile?.full_name}</p>
-              <p className="text-xs text-white/60">Administrator</p>
-            </div>
-          </div>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center w-full px-3 py-2 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <LogOut size={16} className="mr-2" />
-            Sign Out
-          </button>
-        </div>
+          ></div>
+        )}
       </div>
-
-      {/* Main Content */}
-      <div className="flex-1 lg:ml-0">
-        {/* Top Bar */}
-        <header className="bg-slate-800/50 backdrop-blur-xl border-b border-white/10 lg:hidden">
-          <div className="flex items-center justify-between h-16 px-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="text-white/80 hover:text-white"
-            >
-              <Menu size={24} />
-            </button>
-            <h1 className="text-lg font-semibold text-white">Admin Panel</h1>
-            <div></div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="p-6 bg-slate-900/50 min-h-screen">
-          {children}
-        </main>
-      </div>
-
-      {/* Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
 
       {/* Floating WhatsApp Support for Admin */}
       <WhatsAppSupport variant="floating" />

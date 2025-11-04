@@ -23,7 +23,8 @@ import {
   Zap,
   HelpCircle,
   ArrowDownToLine,
-  ArrowUpFromLine
+  ArrowUpFromLine,
+  User
 } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
 import AnnouncementPopup from '@/components/AnnouncementPopup'
@@ -48,6 +49,12 @@ export default function DashboardHome() {
   const [userBalance, setUserBalance] = useState(0)
   const [balanceVisible, setBalanceVisible] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
+  const [stats, setStats] = useState({
+    totalDeposits: 0,
+    totalEarnings: 0,
+    totalWithdrawals: 0
+  })
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,7 +70,11 @@ export default function DashboardHome() {
       
       console.log('User profile:', profile)
       setUser(user)
+      setProfile(profile)
       setUserBalance(profile.balance || 0)
+      
+      // Fetch user statistics
+      await fetchUserStats(user.id)
       
       // Fetch plans
       const { data, error } = await supabase
@@ -119,6 +130,42 @@ export default function DashboardHome() {
     fetchData()
   }, [])
 
+  const fetchUserStats = async (userId: string) => {
+    try {
+      // Fetch total deposits
+      const { data: deposits } = await supabase
+        .from('deposits')
+        .select('amount')
+        .eq('user_id', userId)
+        .eq('status', 'Approved')
+
+      // Fetch total withdrawals
+      const { data: withdrawals } = await supabase
+        .from('withdrawals')
+        .select('amount')
+        .eq('user_id', userId)
+        .eq('status', 'Approved')
+
+      // Fetch total earnings from investments
+      const { data: investments } = await supabase
+        .from('investments')
+        .select('total_earned')
+        .eq('user_id', userId)
+
+      const totalDeposits = deposits?.reduce((sum, deposit) => sum + (deposit.amount || 0), 0) || 0
+      const totalWithdrawals = withdrawals?.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0) || 0
+      const totalEarnings = investments?.reduce((sum, investment) => sum + (investment.total_earned || 0), 0) || 0
+
+      setStats({
+        totalDeposits,
+        totalEarnings,
+        totalWithdrawals
+      })
+    } catch (error) {
+      console.error('Error fetching user stats:', error)
+    }
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PK', {
       style: 'currency',
@@ -126,33 +173,6 @@ export default function DashboardHome() {
       minimumFractionDigits: 0,
     }).format(amount)
   }
-
-  const quickActions = [
-    {
-      href: '/dashboard/deposit',
-      icon: Plus,
-      label: 'Deposit',
-      color: 'bg-green-500 hover:bg-green-600',
-    },
-    {
-      href: '/dashboard/withdraw',
-      icon: Minus,
-      label: 'Withdraw',
-      color: 'bg-blue-500 hover:bg-blue-600',
-    },
-    {
-      href: '/dashboard/wallet',
-      icon: Wallet,
-      label: 'Wallet',
-      color: 'bg-purple-500 hover:bg-purple-600',
-    },
-    {
-      href: '/dashboard/history',
-      icon: History,
-      label: 'History',
-      color: 'bg-gray-500 hover:bg-gray-600',
-    },
-  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -163,85 +183,139 @@ export default function DashboardHome() {
       </div>
 
       <div className="relative z-10">
-        {/* Modern Header */}
-        <div className="px-6 pt-6">
-          {/* Top Navigation */}
-          <div className="flex items-center justify-between mb-8">
-          </div>
-        </div>
-
-        {/* SmartGrow Icon Section */}
-        <div className="px-6 mb-6">
+        {/* Welcome Section */}
+        <div className="px-6 pt-4 mb-4">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg relative">
-              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-blue-500"></div>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg border border-white/20">
+              <User className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">SmartGrow</h2>
-              <p className="text-xs text-slate-400">Investment Platform</p>
+              <h2 className="text-lg font-bold text-white">
+                Welcome dear, {user?.user_metadata?.full_name || profile?.full_name || 'User'}
+              </h2>
+              <p className="text-xs text-slate-400">Good to see you back!</p>
             </div>
           </div>
         </div>
 
-        {/* Balance Card */}
+        {/* Enhanced Balance Card */}
         <div className="px-6">
-          <div className="relative mb-8 p-8 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-3xl"></div>
-            <div className="relative">
+          <div className="relative mb-8 overflow-hidden">
+            {/* Animated Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 via-blue-900/50 to-purple-900/50 rounded-3xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl animate-gradient-x"></div>
+            
+            {/* Floating Orbs */}
+            <div className="absolute top-4 right-8 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-purple-500/20 rounded-full blur-xl animate-pulse"></div>
+            <div className="absolute bottom-6 left-8 w-16 h-16 bg-gradient-to-br from-green-400/20 to-emerald-500/20 rounded-full blur-lg animate-pulse delay-1000"></div>
+            
+            {/* Main Card Content */}
+            <div className="relative p-8 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl">
+              {/* Header Section */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
-                  <Wallet className="w-5 h-5 text-blue-300" />
-                  <span className="text-white/80 text-sm font-medium">Total Balance</span>
+                  <div className="relative">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg border border-white/20">
+                      <Wallet className="w-4 h-4 text-white" />
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border border-white animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent">
+                      Total Balance
+                    </h3>
+                    <p className="text-slate-400 text-xs">Available funds</p>
+                  </div>
                 </div>
+                
                 <button
                   onClick={() => setBalanceVisible(!balanceVisible)}
-                  className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors duration-150"
+                  className="group relative p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-200 border border-white/20 hover:border-white/30"
                 >
-                  {balanceVisible ? (
-                    <EyeOff className="w-4 h-4 text-white/60" />
-                  ) : (
-                    <Eye className="w-4 h-4 text-white/60" />
-                  )}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                  <div className="relative">
+                    {balanceVisible ? (
+                      <EyeOff className="w-5 h-5 text-white/70 group-hover:text-white transition-colors" />
+                    ) : (
+                      <Eye className="w-5 h-5 text-white/70 group-hover:text-white transition-colors" />
+                    )}
+                  </div>
                 </button>
               </div>
               
-              <div className="text-4xl font-bold text-white mb-2">
-                {balanceVisible ? formatCurrency(userBalance) : '••••••'}
+              {/* Balance Display */}
+              <div className="mb-4">
+                <div className="text-3xl font-bold mb-2">
+                  <span className="bg-gradient-to-r from-white via-green-200 to-emerald-300 bg-clip-text text-transparent">
+                    {balanceVisible ? formatCurrency(userBalance) : '••••••••'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full animate-pulse"></div>
+                    <span className="text-white/70 text-sm font-medium">PKR Balance</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 px-3 py-1 bg-green-500/20 rounded-full border border-green-400/30">
+                    <TrendingUp className="w-4 h-4 text-green-400" />
+                    <span className="text-green-400 text-sm font-semibold">Active</span>
+                  </div>
+                </div>
               </div>
               
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-white/60 text-sm">PKR Balance</span>
+              {/* Balance Stats */}
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+                <div className="text-center">
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-500/20 rounded-xl mb-2 mx-auto">
+                    <ArrowDownToLine className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <p className="text-white/60 text-xs mb-1">Total Deposits</p>
+                  <p className="text-white font-semibold text-sm">{formatCurrency(stats.totalDeposits)}</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="flex items-center justify-center w-10 h-10 bg-purple-500/20 rounded-xl mb-2 mx-auto">
+                    <TrendingUp className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <p className="text-white/60 text-xs mb-1">Total Earnings</p>
+                  <p className="text-white font-semibold text-sm">{formatCurrency(stats.totalEarnings)}</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="flex items-center justify-center w-10 h-10 bg-orange-500/20 rounded-xl mb-2 mx-auto">
+                    <ArrowUpFromLine className="w-5 h-5 text-orange-400" />
+                  </div>
+                  <p className="text-white/60 text-xs mb-1">Withdrawals</p>
+                  <p className="text-white font-semibold text-sm">{formatCurrency(stats.totalWithdrawals)}</p>
+                </div>
+              </div>
+              
+              {/* Quick Balance Actions */}
+              <div className="flex space-x-3 mt-4">
+                <Link href="/dashboard/deposit" className="flex-1">
+                  <button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl border border-green-400/30 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                    <div className="relative flex items-center justify-center space-x-2">
+                      <Plus className="w-4 h-4" />
+                      <span>Deposit</span>
+                    </div>
+                  </button>
+                </Link>
+                
+                <Link href="/dashboard/withdraw" className="flex-1">
+                  <button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl border border-red-400/30 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                    <div className="relative flex items-center justify-center space-x-2">
+                      <Minus className="w-4 h-4" />
+                      <span>Withdraw</span>
+                    </div>
+                  </button>
+                </Link>
               </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            {[
-              { href: '/dashboard/deposit', icon: ArrowDownToLine, label: 'Deposit', color: 'from-green-500 to-emerald-600', shadow: 'shadow-green-500/25' },
-              { href: '/dashboard/withdraw', icon: ArrowUpFromLine, label: 'Withdraw', color: 'from-orange-500 to-red-500', shadow: 'shadow-orange-500/25' },
-              { href: '/dashboard/wallet', icon: Wallet, label: 'Wallet', color: 'from-purple-500 to-pink-500', shadow: 'shadow-purple-500/25' },
-              { href: '/dashboard/history', icon: History, label: 'History', color: 'from-blue-500 to-cyan-500', shadow: 'shadow-blue-500/25' }
-            ].map((action, index) => (
-              <div key={action.href}>
-                <Link href={action.href}>
-                  <div className={`relative p-4 bg-gradient-to-br ${action.color} rounded-2xl shadow-lg ${action.shadow} overflow-hidden group hover:scale-105 transition-transform duration-150`}>
-                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                    <div className="relative flex flex-col items-center space-y-2">
-                      <div className="p-3 bg-white/20 rounded-xl">
-                        <action.icon className="w-5 h-5 text-white" />
-                      </div>
-                      <span className="text-white text-xs font-medium">{action.label}</span>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Investment Plans Section */}
