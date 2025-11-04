@@ -13,7 +13,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Trophy
 } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
 import './admin-dark.css'
@@ -70,6 +71,7 @@ export default function AdminLayout({
     { href: '/admin/withdrawals', icon: Banknote, label: 'Manage Withdrawals' },
     { href: '/admin/users', icon: Users, label: 'Manage Users' },
     { href: '/admin/plans', icon: TrendingUp, label: 'Manage Plans' },
+    { href: '/admin/rankings', icon: Trophy, label: 'User Rankings' },
     { href: '/admin/settings', icon: Settings, label: 'Site Settings' },
   ]
 
