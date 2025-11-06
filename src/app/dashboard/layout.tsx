@@ -7,6 +7,8 @@ import WhatsAppSupport from '@/components/WhatsAppSupport'
 import AppInstallPrompt from '@/components/AppInstallPrompt'
 import ModernHeader from '@/components/ModernHeader'
 import ModernNavigation from '@/components/ModernNavigation'
+import ErrorBoundary from '@/components/ErrorBoundary'
+import { useAutoRefresh } from '@/hooks/useAutoRefresh'
 
 
 export default function DashboardLayout({
@@ -19,6 +21,13 @@ export default function DashboardLayout({
   const [forceUpdate, setForceUpdate] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
+  
+  // Auto-refresh hook to prevent caching issues
+  const { clearCache, softRefresh } = useAutoRefresh({
+    enabled: true,
+    interval: 30000, // Check every 30 seconds
+    maxRetries: 3
+  })
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -58,23 +67,31 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      {/* Modern Header */}
-      <ModernHeader />
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        {/* Modern Header */}
+        <ErrorBoundary>
+          <ModernHeader />
+        </ErrorBoundary>
 
-      {/* Main Content */}
-      <main className="pb-20 pt-2">
-        {children}
-      </main>
+        {/* Main Content */}
+        <main className="pb-20 pt-2">
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </main>
 
-      {/* Modern Bottom Navigation */}
-      <ModernNavigation variant="bottom" />
+        {/* Modern Bottom Navigation */}
+        <ErrorBoundary>
+          <ModernNavigation variant="bottom" />
+        </ErrorBoundary>
 
-      {/* Floating WhatsApp Support */}
-      <WhatsAppSupport variant="floating" />
+        {/* Floating WhatsApp Support */}
+        <WhatsAppSupport variant="floating" />
 
-      {/* App Install Prompt */}
-      <AppInstallPrompt showOnPages={['dashboard']} />
-    </div>
+        {/* App Install Prompt */}
+        <AppInstallPrompt showOnPages={['dashboard']} />
+      </div>
+    </ErrorBoundary>
   )
 }

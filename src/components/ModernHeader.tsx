@@ -62,10 +62,10 @@ export default function ModernHeader({
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="sticky top-0 z-50 bg-gradient-to-r from-slate-900/95 via-blue-900/95 to-slate-900/95 backdrop-blur-xl border-b border-white/10 shadow-2xl"
+      className="sticky top-0 z-50 bg-gradient-to-r from-slate-900/95 via-blue-900/95 to-slate-900/95 backdrop-blur-xl border-b border-white/10 shadow-2xl rounded-b-2xl"
     >
       {/* Animated background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 animate-gradient-x"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 animate-gradient-x rounded-b-2xl"></div>
       
       <div className="relative px-4 lg:px-6 py-2">
         <div className="flex items-center justify-between">
@@ -96,11 +96,11 @@ export default function ModernHeader({
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-blue-500 animate-pulse"></div>
                 </div>
               </div>
-              <div className="hidden sm:block">
-                <h1 className="text-lg font-bold text-white">
-                  SmartGrow
+              <div className="block">
+                <h1 className="text-base sm:text-lg font-bold text-white">
+                  SmartGrow Mining
                 </h1>
-                <p className="text-xs text-slate-400">Investment Platform</p>
+                <p className="text-xs text-slate-400 hidden sm:block">Investment Platform</p>
               </div>
             </motion.div>
           </div>

@@ -88,8 +88,18 @@ export default function WithdrawPage() {
     return new Intl.NumberFormat('en-PK', {
       style: 'currency',
       currency: 'PKR',
-      minimumFractionDigits: 2,
+      minimumFractionDigits: 0,
     }).format(amount)
+  }
+
+  // Helper function to parse account type and bank name
+  const parseAccountType = (accountType: string | null) => {
+    if (!accountType) return { type: '', bankName: '' }
+    if (accountType.startsWith('bank:')) {
+      const [type, bankName] = accountType.split(':')
+      return { type, bankName }
+    }
+    return { type: accountType, bankName: '' }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -246,7 +256,7 @@ export default function WithdrawPage() {
         <Link href="/dashboard" className="mr-3">
           <ArrowLeft className="w-6 h-6 text-gray-600" />
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">Withdraw Funds</h1>
+        <h1 className="text-xl font-bold text-white">Withdraw Funds</h1>
       </div>
 
       {/* Withdrawal Status */}
@@ -269,7 +279,12 @@ export default function WithdrawPage() {
             <h3 className="font-semibold text-green-900">Bound Withdrawal Account</h3>
           </div>
           <div className="space-y-1 text-sm">
-            <p><span className="text-gray-600">Type:</span> <span className="font-medium">{profile.withdrawal_account_type}</span></p>
+            <p><span className="text-gray-600">Type:</span> <span className="font-medium">
+              {parseAccountType(profile.withdrawal_account_type).type === 'bank' 
+                ? `${parseAccountType(profile.withdrawal_account_type).bankName} Bank`
+                : parseAccountType(profile.withdrawal_account_type).type?.toUpperCase()
+              }
+            </span></p>
             <p><span className="text-gray-600">Name:</span> <span className="font-medium">{profile.withdrawal_account_name}</span></p>
             <p><span className="text-gray-600">Number:</span> <span className="font-medium">{profile.withdrawal_account_number}</span></p>
           </div>
@@ -284,10 +299,10 @@ export default function WithdrawPage() {
             You need to bind your withdrawal account before making withdrawals.
           </p>
           <Link
-            href="/dashboard/profile"
+            href="/dashboard/profile/bind-account"
             className="inline-block bg-yellow-600 text-white px-4 py-2 rounded-md text-sm hover:bg-yellow-700 transition-colors"
           >
-            Bind Account in Profile
+            Bind Account
           </Link>
         </div>
       )}

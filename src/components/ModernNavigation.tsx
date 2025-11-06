@@ -81,10 +81,10 @@ export default function ModernNavigation({ variant = 'bottom', isAdmin = false }
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-900/95 via-blue-900/95 to-slate-900/95 backdrop-blur-xl border-t border-white/10 shadow-2xl"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-900/95 via-blue-900/95 to-slate-900/95 backdrop-blur-xl border-t border-white/10 shadow-2xl rounded-t-2xl"
       >
         {/* Animated background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 animate-gradient-x"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 animate-gradient-x rounded-t-2xl"></div>
         
         {/* Active indicator background */}
         <motion.div

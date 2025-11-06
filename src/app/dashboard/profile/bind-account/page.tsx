@@ -87,7 +87,7 @@ export default function BindAccountPage() {
       const { error } = await supabase
         .from('user_profiles')
         .update({
-          withdrawal_account_type: accountType,
+          withdrawal_account_type: accountType === 'bank' ? `bank:${bankName}` : accountType,
           withdrawal_account_name: accountName,
           withdrawal_account_number: accountNumber
         })
@@ -101,7 +101,7 @@ export default function BindAccountPage() {
       if (profile) {
         setProfile({
           ...profile,
-          withdrawal_account_type: accountType,
+          withdrawal_account_type: accountType === 'bank' ? `bank:${bankName}` : accountType,
           withdrawal_account_name: accountName,
           withdrawal_account_number: accountNumber
         })
@@ -125,6 +125,16 @@ export default function BindAccountPage() {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     )
+  }
+
+  // Helper functions to parse account type and bank name
+  const parseAccountType = (accountType: string | null) => {
+    if (!accountType) return { type: '', bankName: '' }
+    if (accountType.startsWith('bank:')) {
+      const [type, bankName] = accountType.split(':')
+      return { type, bankName }
+    }
+    return { type: accountType, bankName: '' }
   }
 
   // Check if user already has an account bound
@@ -179,14 +189,19 @@ export default function BindAccountPage() {
               </div>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
-                  {profile.withdrawal_account_type === 'bank' ? (
+                  {parseAccountType(profile.withdrawal_account_type).type === 'bank' ? (
                     <Building2 className="w-5 h-5 text-green-400" />
                   ) : (
                     <Smartphone className="w-5 h-5 text-green-400" />
                   )}
                   <div>
                     <p className="text-green-100 text-sm">Account Type</p>
-                    <p className="text-white font-medium">{profile.withdrawal_account_type?.toUpperCase()}</p>
+                    <p className="text-white font-medium">
+                      {parseAccountType(profile.withdrawal_account_type).type === 'bank' 
+                        ? `${parseAccountType(profile.withdrawal_account_type).bankName} Bank`
+                        : parseAccountType(profile.withdrawal_account_type).type?.toUpperCase()
+                      }
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -200,11 +215,22 @@ export default function BindAccountPage() {
                   <CreditCard className="w-5 h-5 text-green-400" />
                   <div>
                     <p className="text-green-100 text-sm">
-                      {profile.withdrawal_account_type === 'bank' ? 'Account Number' : 'Mobile Number'}
+                      {parseAccountType(profile.withdrawal_account_type).type === 'bank' ? 'Account Number' : 'Mobile Number'}
                     </p>
                     <p className="text-white font-medium">{profile.withdrawal_account_number}</p>
                   </div>
                 </div>
+              </div>
+              
+              {/* Withdrawal Button */}
+              <div className="mt-4 pt-4 border-t border-green-500/30">
+                <Link
+                  href="/dashboard/withdraw"
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span>Make Withdrawal</span>
+                </Link>
               </div>
             </div>
 
