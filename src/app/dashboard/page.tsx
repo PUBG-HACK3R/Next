@@ -207,17 +207,29 @@ export default function DashboardHome() {
     try {
       console.log('Fetching user stats for userId:', userId)
       
-      // Fetch total deposits (check both 'approved' and 'Approved' status)
+      // Debug: Fetch ALL deposits to see what statuses exist
+      const { data: allDeposits, error: allDepositsError } = await supabase
+        .from('deposits')
+        .select('amount_pkr, status')
+        .eq('user_id', userId)
+
+      if (allDepositsError) {
+        console.error('Error fetching all deposits:', allDepositsError)
+      } else {
+        console.log('ALL Deposits data (for debugging):', allDeposits)
+      }
+
+      // Fetch total deposits (include pending, approved, and completed)
       const { data: deposits, error: depositsError } = await supabase
         .from('deposits')
-        .select('amount, status')
+        .select('amount_pkr, status')
         .eq('user_id', userId)
-        .in('status', ['approved', 'Approved'])
+        .in('status', ['pending', 'approved', 'Approved', 'completed', 'Completed'])
 
       if (depositsError) {
-        console.error('Error fetching deposits:', depositsError)
+        console.error('Error fetching approved deposits:', depositsError)
       } else {
-        console.log('Deposits data:', deposits)
+        console.log('Approved Deposits data:', deposits)
       }
 
       // Fetch total withdrawals (check both 'approved' and 'Approved' status)
@@ -251,12 +263,13 @@ export default function DashboardHome() {
         console.log('Investments data:', investments)
       }
 
-      const totalDeposits = deposits?.reduce((sum, deposit) => sum + (deposit.amount || 0), 0) || 0
+      // Only count actual deposits (not investments, since investments come from deposits)
+      const totalDeposits = allDeposits?.reduce((sum, deposit) => sum + (deposit.amount_pkr || 0), 0) || 0
       const totalWithdrawals = withdrawals?.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0) || 0
       
-      // Calculate total earnings based on completed investments
+      // Calculate total earnings based on ONLY completed investments
       const totalEarnings = investments?.reduce((sum, investment: any) => {
-        if (investment.status === 'completed' || investment.status === 'active') {
+        if (investment.status === 'completed') {
           const plan = investment.plans
           const profitPercent = plan?.profit_percent || 0
           const investmentAmount = investment.amount_invested || 0

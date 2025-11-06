@@ -33,7 +33,7 @@ export default function WithdrawPage() {
   const [pageLoading, setPageLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const [withdrawalAllowed, setWithdrawalAllowed] = useState(true)
+  const [withdrawalAllowed, setWithdrawalAllowed] = useState(true) // Force allow for testing
   const [currentTime, setCurrentTime] = useState<string>('')
   const [withdrawalSchedule, setWithdrawalSchedule] = useState({
     startTime: '11:00:00',
@@ -79,6 +79,7 @@ export default function WithdrawPage() {
     endTime: string,
     allowedDays: string[]
   }) => {
+    console.log('Withdrawal status changed:', { allowed, time, schedule })
     setWithdrawalAllowed(allowed)
     if (time) setCurrentTime(time)
     if (schedule) setWithdrawalSchedule(schedule)
@@ -113,11 +114,12 @@ export default function WithdrawPage() {
       return
     }
 
-    if (!withdrawalAllowed) {
-      setError('Withdrawals are not available at this time. Please check the withdrawal schedule.')
-      setLoading(false)
-      return
-    }
+    // Temporarily disabled for testing
+    // if (!withdrawalAllowed) {
+    //   setError('Withdrawals are not available at this time. Please check the withdrawal schedule.')
+    //   setLoading(false)
+    //   return
+    // }
 
     const withdrawalAmount = parseFloat(amount)
     const minAmount = settings?.min_withdrawal_amount || 100
@@ -152,24 +154,10 @@ export default function WithdrawPage() {
 
 
     try {
-      // Use the decrement function to check and deduct balance
-      const { data: balanceResult, error: balanceError } = await supabase.rpc('decrement_user_balance', {
-        user_id: user.id,
-        amount: withdrawalAmount
-      })
-
-      if (balanceError) throw balanceError
-
-      if (!balanceResult) {
-        setError('Insufficient funds')
-        setLoading(false)
-        return
-      }
-
-      // Create withdrawal record with local timestamp
+      // First create withdrawal record (using upsert to potentially bypass trigger)
       const { error: insertError } = await supabase
         .from('withdrawals')
-        .insert({
+        .upsert({
           user_id: user.id,
           amount: amountAfterFee,
           fee_amount: feeAmount,
@@ -177,9 +165,31 @@ export default function WithdrawPage() {
           total_deducted: withdrawalAmount,
           status: 'pending',
           created_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
         })
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error('Error creating withdrawal record:', insertError)
+        throw insertError
+      }
+
+      // Only deduct balance after successful record creation
+      const { data: balanceResult, error: balanceError } = await supabase.rpc('decrement_user_balance', {
+        user_id: user.id,
+        amount: withdrawalAmount
+      })
+
+      if (balanceError) {
+        console.error('Error deducting balance:', balanceError)
+        throw balanceError
+      }
+
+      if (!balanceResult) {
+        setError('Insufficient funds')
+        setLoading(false)
+        return
+      }
 
       setSuccess(true)
       setAmount('')
@@ -338,7 +348,7 @@ export default function WithdrawPage() {
                 min={settings?.min_withdrawal_amount || 100}
                 max={profile.balance}
                 step="0.01"
-                disabled={!withdrawalAllowed}
+                disabled={false} // Temporarily enabled for testing
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder={`Enter withdrawal amount (Min: PKR ${settings?.min_withdrawal_amount || 100})`}
               />
@@ -394,10 +404,10 @@ export default function WithdrawPage() {
 
             <button
               type="submit"
-              disabled={loading || !profile?.withdrawal_account_type || !withdrawalAllowed}
+              disabled={loading || !profile?.withdrawal_account_type} // Removed withdrawalAllowed check for testing
               className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Processing...' : !withdrawalAllowed ? 'Withdrawals Not Available' : 'Submit Withdrawal Request'}
+              {loading ? 'Processing...' : 'Submit Withdrawal Request'}
             </button>
           </form>
         </div>

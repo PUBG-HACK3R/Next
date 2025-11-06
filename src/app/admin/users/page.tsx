@@ -157,7 +157,7 @@ export default function AdminUsersPage() {
       // Fetch deposits
       const { data: deposits } = await supabase
         .from('deposits')
-        .select('amount')
+        .select('amount_pkr')
         .eq('user_id', userId)
         .eq('status', 'approved')
 
@@ -181,7 +181,7 @@ export default function AdminUsersPage() {
         .select('id', { count: 'exact', head: true })
         .eq('referred_by', userId)
 
-      const totalDeposits = deposits?.reduce((sum, d) => sum + d.amount, 0) || 0
+      const totalDeposits = deposits?.reduce((sum, d) => sum + d.amount_pkr, 0) || 0
       const totalWithdrawals = withdrawals?.reduce((sum, w) => sum + w.amount, 0) || 0
 
       setUserStats({

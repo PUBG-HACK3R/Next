@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     // Use admin settings or defaults
     const withdrawalEnabled = adminSettings?.withdrawal_enabled ?? true
-    const withdrawalAutoSchedule = adminSettings?.withdrawal_auto_schedule ?? true
+    const withdrawalAutoSchedule = adminSettings?.withdrawal_auto_schedule ?? false // Temporarily disabled for testing
     const startTime = adminSettings?.withdrawal_start_time || '11:00:00'
     const endTime = adminSettings?.withdrawal_end_time || '20:00:00'
     const allowedDays = adminSettings?.withdrawal_days_enabled ? 

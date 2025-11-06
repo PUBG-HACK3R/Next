@@ -78,13 +78,18 @@ export default function WithdrawalStatus({ onStatusChange, showDetails = true }:
       const response = await fetch('/api/withdrawal/status')
       const data = await response.json()
       
-      if (data.success) {
+      console.log('Withdrawal Status API Response:', data)
+      
+      if (data.success && data.status) {
+        console.log('Setting withdrawal status:', data.status)
         setStatus(data.status)
       } else {
         // If API fails, try to get admin settings directly and calculate status
         try {
           const settingsResponse = await fetch('/api/admin/settings')
           const settingsData = await settingsResponse.json()
+          
+          console.log('Admin Settings API Response:', settingsData)
           
           let startTime = '11:00:00'
           let endTime = '20:00:00'
