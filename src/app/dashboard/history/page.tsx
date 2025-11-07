@@ -11,12 +11,13 @@ import {
   Filter,
   Calendar,
   Search,
-  RefreshCw
+  RefreshCw,
+  Gift
 } from 'lucide-react'
 
 interface Transaction {
   id: string
-  type: 'deposit' | 'withdrawal' | 'investment' | 'commission'
+  type: 'deposit' | 'withdrawal' | 'investment' | 'commission' | 'bonus'
   amount: number
   status: string
   created_at: string
@@ -166,6 +167,29 @@ export default function HistoryPage() {
         })
       }
 
+      // Fetch bonus transactions
+      const { data: bonuses, error: bonusError } = await supabase
+        .from('bonus_transactions')
+        .select('id, amount, reason, status, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      console.log('Bonus transactions:', bonuses, 'Error:', bonusError)
+
+      if (bonuses) {
+        bonuses.forEach(bonus => {
+          allTransactions.push({
+            id: `bonus-${bonus.id}`,
+            type: 'bonus',
+            amount: bonus.amount,
+            status: bonus.status,
+            created_at: bonus.created_at,
+            description: `Bonus: ${bonus.reason || 'Admin bonus'}`,
+            reference: `BON-${bonus.id}`
+          })
+        })
+      }
+
       // Sort by date (newest first)
       allTransactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       
@@ -253,6 +277,8 @@ export default function HistoryPage() {
         return <TrendingUp className="w-4 h-4 text-blue-600" />
       case 'commission':
         return <TrendingUp className="w-4 h-4 text-purple-600" />
+      case 'bonus':
+        return <Gift className="w-4 h-4 text-orange-600" />
       default:
         return <TrendingUp className="w-4 h-4 text-gray-600" />
     }
@@ -262,6 +288,7 @@ export default function HistoryPage() {
     switch (type) {
       case 'deposit':
       case 'commission':
+      case 'bonus':
         return 'text-green-600'
       case 'withdrawal':
       case 'investment':
@@ -275,6 +302,7 @@ export default function HistoryPage() {
     switch (type) {
       case 'deposit':
       case 'commission':
+      case 'bonus':
         return '+'
       case 'withdrawal':
       case 'investment':

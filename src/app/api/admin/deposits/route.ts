@@ -242,13 +242,8 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to update user balance' }, { status: 500 })
       }
 
-      // Process referral commissions (separate from deposit amount)
-      try {
-        await processReferralCommissions(deposit.user_id, deposit_id, deposit.amount_pkr, 'deposit')
-      } catch (commissionError) {
-        console.error('Error processing referral commissions:', commissionError)
-        // Don't fail the approval, just log the error
-      }
+      // NOTE: Referral commissions are handled automatically by database trigger
+      // when deposit status changes to 'approved' - no manual processing needed
 
       return NextResponse.json({ 
         success: true, 

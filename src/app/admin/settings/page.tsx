@@ -893,6 +893,228 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       )}
+
+      {/* User Bonus Management */}
+      <BonusManagement />
+    </div>
+  )
+}
+
+// Bonus Management Component
+function BonusManagement() {
+  const [users, setUsers] = useState<any[]>([])
+  const [selectedUser, setSelectedUser] = useState('')
+  const [bonusAmount, setBonusAmount] = useState('')
+  const [bonusReason, setBonusReason] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState('')
+  const [error, setError] = useState('')
+  const [bonusHistory, setBonusHistory] = useState<any[]>([])
+
+  useEffect(() => {
+    fetchUsers()
+    fetchBonusHistory()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, balance')
+        .order('full_name')
+
+      if (error) throw error
+      setUsers(data || [])
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    }
+  }
+
+  const fetchBonusHistory = async () => {
+    try {
+      const response = await fetch('/api/admin/bonus')
+      const data = await response.json()
+      
+      if (data.success) {
+        setBonusHistory(data.bonuses || [])
+      }
+    } catch (error) {
+      console.error('Error fetching bonus history:', error)
+    }
+  }
+
+  const handleGiveBonus = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const response = await fetch('/api/admin/bonus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: selectedUser,
+          amount: parseFloat(bonusAmount),
+          reason: bonusReason || 'Admin bonus'
+        })
+      })
+
+      const data = await response.json()
+
+      console.log('Bonus API response:', data)
+
+      if (data.success) {
+        setSuccess(data.message)
+        setBonusAmount('')
+        setBonusReason('')
+        setSelectedUser('')
+        fetchUsers() // Refresh user balances
+        fetchBonusHistory() // Refresh bonus history
+      } else {
+        console.error('Bonus error:', data)
+        setError(data.error || 'Failed to give bonus')
+        if (data.details) {
+          setError(`${data.error}: ${data.details}`)
+        }
+      }
+    } catch (error) {
+      setError('Failed to give bonus')
+      console.error('Error giving bonus:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+        <CreditCard className="w-5 h-5 mr-2" />
+        User Bonus Management
+      </h3>
+
+      {/* Give Bonus Form */}
+      <form onSubmit={handleGiveBonus} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              Select User
+            </label>
+            <select
+              value={selectedUser}
+              onChange={(e) => setSelectedUser(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Choose a user...</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.full_name} (Balance: PKR {user.balance})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              Bonus Amount (PKR)
+            </label>
+            <input
+              type="number"
+              value={bonusAmount}
+              onChange={(e) => setBonusAmount(e.target.value)}
+              required
+              min="1"
+              step="0.01"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter bonus amount"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-900 mb-2">
+            Reason (Optional)
+          </label>
+          <input
+            type="text"
+            value={bonusReason}
+            onChange={(e) => setBonusReason(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="e.g., Welcome bonus, Special reward, etc."
+          />
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+            {success}
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+          >
+            <CreditCard className="w-4 h-4" />
+            <span>{loading ? 'Processing...' : 'Give Bonus'}</span>
+          </button>
+        </div>
+      </form>
+
+      {/* Bonus History */}
+      {bonusHistory.length > 0 && (
+        <div className="mt-8">
+          <h4 className="text-md font-medium text-gray-900 mb-4">Recent Bonus History</h4>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Reason
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {bonusHistory.slice(0, 10).map((bonus) => (
+                  <tr key={bonus.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {bonus.user_profiles?.full_name || 'Unknown User'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                      +PKR {bonus.amount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {bonus.reason}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(bonus.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

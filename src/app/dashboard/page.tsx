@@ -219,12 +219,12 @@ export default function DashboardHome() {
         console.log('ALL Deposits data (for debugging):', allDeposits)
       }
 
-      // Fetch total deposits (include pending, approved, and completed)
+      // Fetch total deposits (only approved and completed, NOT pending)
       const { data: deposits, error: depositsError } = await supabase
         .from('deposits')
         .select('amount_pkr, status')
         .eq('user_id', userId)
-        .in('status', ['pending', 'approved', 'Approved', 'completed', 'Completed'])
+        .in('status', ['approved', 'Approved', 'completed', 'Completed'])
 
       if (depositsError) {
         console.error('Error fetching approved deposits:', depositsError)
@@ -263,8 +263,8 @@ export default function DashboardHome() {
         console.log('Investments data:', investments)
       }
 
-      // Only count actual deposits (not investments, since investments come from deposits)
-      const totalDeposits = allDeposits?.reduce((sum, deposit) => sum + (deposit.amount_pkr || 0), 0) || 0
+      // Only count APPROVED deposits (not pending ones)
+      const totalDeposits = deposits?.reduce((sum, deposit) => sum + (deposit.amount_pkr || 0), 0) || 0
       const totalWithdrawals = withdrawals?.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0) || 0
       
       // Calculate total earnings based on ONLY completed investments
