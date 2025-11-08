@@ -81,7 +81,7 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                 damping: isLowEnd ? undefined : 25,
                 stiffness: isLowEnd ? undefined : 300
               }}
-              className="relative w-full max-w-md bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-white/10"
+              className="relative w-full max-w-sm bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-white/10"
             >
             {/* Animated Background Elements - Disabled on low-end devices */}
             {!isLowEnd && (
@@ -168,7 +168,7 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
               </>
             )}
 
-            <div className="relative z-10 p-8">
+            <div className="relative z-10 p-6">
               {/* Header Section */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -177,7 +177,7 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                 className="text-center mb-8"
               >
                 {/* Modern Icon */}
-                <div className="relative mx-auto mb-6 w-20 h-20">
+                <div className="relative mx-auto mb-4 w-16 h-16">
                   {!isLowEnd && (
                     <motion.div
                       animate={animationConfig.animate ? { rotate: 360 } : {}}
@@ -185,10 +185,10 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                       className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl opacity-20 blur-sm"
                     />
                   )}
-                  <div className="relative w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl border border-white/20">
-                    <Zap className="w-10 h-10 text-white" />
-                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
-                      <div className={`w-2 h-2 bg-white rounded-full ${isLowEnd ? '' : 'animate-pulse'}`} />
+                  <div className="relative w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-xl border border-white/20">
+                    <Zap className="w-8 h-8 text-white" />
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                      <div className={`w-1.5 h-1.5 bg-white rounded-full ${isLowEnd ? '' : 'animate-pulse'}`} />
                     </div>
                   </div>
                 </div>
@@ -198,7 +198,7 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-2xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent mb-2"
+                  className="text-xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent mb-1"
                 >
                   Welcome to SmartGrow
                 </motion.h1>
@@ -206,7 +206,7 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="text-slate-300 text-sm"
+                  className="text-slate-300 text-xs"
                 >
                   Your Mining Investment Journey Begins
                 </motion.p>
@@ -215,10 +215,10 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.5 }}
-                    className="mt-3 inline-flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20"
+                    className="mt-2 inline-flex items-center bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/20"
                   >
-                    <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
-                    <span className="text-white text-sm font-medium">Hello, {userName}!</span>
+                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 animate-pulse" />
+                    <span className="text-white text-xs font-medium">Hello, {userName}!</span>
                   </motion.div>
                 )}
               </motion.div>
@@ -228,7 +228,7 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="grid grid-cols-3 gap-4 mb-8"
+                className="grid grid-cols-3 gap-3 mb-6"
               >
                 {[
                   { icon: TrendingUp, label: "Daily Rewards", color: "from-green-400 to-emerald-500" },
@@ -241,12 +241,12 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: animationConfig.animate ? 0.7 + index * 0.1 : 0 }}
                     whileHover={isLowEnd ? {} : { scale: 1.05 }}
-                    className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 text-center border border-white/10 hover:bg-white/10 transition-all duration-200"
+                    className="bg-white/5 backdrop-blur-sm rounded-xl p-3 text-center border border-white/10 hover:bg-white/10 transition-all duration-200"
                   >
-                    <div className={`w-10 h-10 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mx-auto mb-2 shadow-lg`}>
-                      <feature.icon className="w-5 h-5 text-white" />
+                    <div className={`w-8 h-8 bg-gradient-to-br ${feature.color} rounded-lg flex items-center justify-center mx-auto mb-1.5 shadow-lg`}>
+                      <feature.icon className="w-4 h-4 text-white" />
                     </div>
-                    <p className="text-white text-xs font-medium">{feature.label}</p>
+                    <p className="text-white text-[10px] font-medium leading-tight">{feature.label}</p>
                   </motion.div>
                 ))}
               </motion.div>
@@ -256,21 +256,21 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="space-y-4"
+                className="space-y-3"
               >
                 <motion.button
                   whileHover={isLowEnd ? {} : { scale: 1.02 }}
                   whileTap={isLowEnd ? {} : { scale: 0.98 }}
                   onClick={handleActivateMiner}
-                  className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 hover:from-blue-600 hover:via-purple-600 hover:to-blue-700 text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-300 shadow-xl border border-white/20 backdrop-blur-sm relative overflow-hidden group"
+                  className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 hover:from-blue-600 hover:via-purple-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 shadow-xl border border-white/20 backdrop-blur-sm relative overflow-hidden group"
                 >
                   {!isLowEnd && (
                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   )}
-                  <div className="relative flex items-center justify-center">
-                    <Zap className="w-5 h-5 mr-2" />
+                  <div className="relative flex items-center justify-center text-sm">
+                    <Zap className="w-4 h-4 mr-2" />
                     <span>Activate Your Miner</span>
-                    <ArrowRight className={`w-5 h-5 ml-2 ${isLowEnd ? '' : 'group-hover:translate-x-1 transition-transform'}`} />
+                    <ArrowRight className={`w-4 h-4 ml-2 ${isLowEnd ? '' : 'group-hover:translate-x-1 transition-transform'}`} />
                   </div>
                 </motion.button>
 
@@ -279,15 +279,15 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                     whileHover={isLowEnd ? {} : { scale: 1.02 }}
                     whileTap={isLowEnd ? {} : { scale: 0.98 }}
                     onClick={handleJoinGroup}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-300 shadow-xl border border-white/20 backdrop-blur-sm relative overflow-hidden group"
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 shadow-xl border border-white/20 backdrop-blur-sm relative overflow-hidden group"
                   >
                     {!isLowEnd && (
                       <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                     )}
-                    <div className="relative flex items-center justify-center">
-                      <MessageCircle className="w-5 h-5 mr-2" />
+                    <div className="relative flex items-center justify-center text-sm">
+                      <MessageCircle className="w-4 h-4 mr-2" />
                       <span>Join WhatsApp Group</span>
-                      <ArrowRight className={`w-5 h-5 ml-2 ${isLowEnd ? '' : 'group-hover:translate-x-1 transition-transform'}`} />
+                      <ArrowRight className={`w-4 h-4 ml-2 ${isLowEnd ? '' : 'group-hover:translate-x-1 transition-transform'}`} />
                     </div>
                   </motion.button>
                 )}
@@ -298,9 +298,9 @@ const WelcomePopup = memo(function WelcomePopup({ isOpen, onClose, userName }: W
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1 }}
-                className="text-center mt-6 pt-6 border-t border-white/10"
+                className="text-center mt-4 pt-4 border-t border-white/10"
               >
-                <p className="text-slate-400 text-xs">
+                <p className="text-slate-400 text-[10px]">
                   Transform Your <span className="text-yellow-400 font-semibold">Network</span> Into{' '}
                   <span className="text-green-400 font-semibold">Wealth</span> ⚡
                 </p>

@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUserWithProfile } from '@/lib/auth'
 import { 
@@ -26,8 +27,16 @@ import {
   ArrowUpFromLine,
   User
 } from 'lucide-react'
-import WhatsAppSupport from '@/components/WhatsAppSupport'
-import AnnouncementPopup from '@/components/AnnouncementPopup'
+
+// Dynamic imports for heavy components
+const WhatsAppSupport = dynamic(() => import('@/components/WhatsAppSupport'), {
+  ssr: false,
+  loading: () => null
+})
+const AnnouncementPopup = dynamic(() => import('@/components/AnnouncementPopup'), {
+  ssr: false,
+  loading: () => null
+})
 
 interface Plan {
   id: number
@@ -57,32 +66,9 @@ export default function DashboardHome() {
   })
 
   useEffect(() => {
-    // Clear service worker cache on mount
-    const clearServiceWorkerCache = async () => {
-      if ('serviceWorker' in navigator && 'caches' in window) {
-        try {
-          const cacheNames = await caches.keys()
-          await Promise.all(
-            cacheNames.map(cacheName => {
-              if (cacheName.includes('smartgrow')) {
-                console.log('Clearing cache:', cacheName)
-                return caches.delete(cacheName)
-              }
-            })
-          )
-        } catch (error) {
-          console.warn('Failed to clear cache:', error)
-        }
-      }
-    }
-
     const fetchData = async () => {
       try {
-        console.log('Fetching dashboard data...')
         setLoading(true)
-        
-        // Clear cache first
-        await clearServiceWorkerCache()
         
         // Fetch user profile and balance
         const { user, profile, error: userError } = await getCurrentUserWithProfile()
@@ -93,7 +79,6 @@ export default function DashboardHome() {
         }
         
         if (!profile) {
-          console.warn('No profile found for user, creating default profile')
           // Set default values if profile is missing
           setUser(user)
           setProfile({ 
@@ -104,92 +89,67 @@ export default function DashboardHome() {
           })
           setUserBalance(0)
         } else {
-          console.log('User profile:', profile)
           setUser(user)
           setProfile(profile)
           setUserBalance(profile.balance || 0)
         }
         
-        // Fetch user statistics (with error handling)
-        if (user?.id) {
-          await fetchUserStats(user.id)
-        }
-        
-        // Fetch plans
-        try {
-          const { data, error } = await supabase
+        // Fetch all data in parallel for better performance
+        const [statsResult, plansResult] = await Promise.allSettled([
+          user?.id ? fetchUserStats(user.id) : Promise.resolve(),
+          supabase
             .from('plans')
             .select('*')
             .in('status', ['Active', 'Premium'])
             .order('min_investment', { ascending: true })
-
-          console.log('Plans data:', data)
-          console.log('Plans error:', error)
-
-          if (error) {
-            console.error('Error fetching plans:', error)
-            setPlans([]) // Set empty array on error
-          } else if (data && user) {
-            console.log('Setting plans:', data.length, 'plans found')
+        ])
+        
+        // Handle plans result
+        if (plansResult.status === 'fulfilled' && plansResult.value.data && user) {
+          const plansData = plansResult.value.data
+          
+          // Optimize: Fetch all investment counts in a single query
+          const planIds = plansData
+            .filter((p: Plan) => p.purchase_limit_per_user)
+            .map((p: Plan) => p.id)
+          
+          if (planIds.length > 0) {
+            const { data: investmentCounts } = await supabase
+              .from('investments')
+              .select('plan_id')
+              .eq('user_id', user.id)
+              .in('plan_id', planIds)
             
-            // Check purchase limits for each plan
-            try {
-              const plansWithLimits = await Promise.all(
-                data.map(async (plan: Plan) => {
-                  try {
-                    if (plan.purchase_limit_per_user) {
-                      // Count user's purchases for this plan
-                      const { count, error: countError } = await supabase
-                        .from('investments')
-                        .select('id', { count: 'exact', head: true })
-                        .eq('user_id', user.id)
-                        .eq('plan_id', plan.id)
-                      
-                      if (countError) {
-                        console.error('Error counting user purchases:', countError)
-                        return {
-                          ...plan,
-                          user_purchase_count: 0,
-                          can_purchase: true
-                        }
-                      }
-                      
-                      const userPurchaseCount = count || 0
-                      const canPurchase = userPurchaseCount < plan.purchase_limit_per_user
-                      
-                      return {
-                        ...plan,
-                        user_purchase_count: userPurchaseCount,
-                        can_purchase: canPurchase
-                      }
-                    }
-                    
-                    return {
-                      ...plan,
-                      user_purchase_count: 0,
-                      can_purchase: true
-                    }
-                  } catch (planError) {
-                    console.error('Error processing plan:', plan.id, planError)
-                    return {
-                      ...plan,
-                      user_purchase_count: 0,
-                      can_purchase: true
-                    }
-                  }
-                })
-              )
-              
-              setPlans(plansWithLimits)
-            } catch (plansError) {
-              console.error('Error processing plans with limits:', plansError)
-              setPlans(data) // Set plans without limits on error
-            }
+            const countMap = new Map<number, number>()
+            investmentCounts?.forEach((inv: any) => {
+              countMap.set(inv.plan_id, (countMap.get(inv.plan_id) || 0) + 1)
+            })
+            
+            const plansWithLimits = plansData.map((plan: Plan) => {
+              if (plan.purchase_limit_per_user) {
+                const userPurchaseCount = countMap.get(plan.id) || 0
+                return {
+                  ...plan,
+                  user_purchase_count: userPurchaseCount,
+                  can_purchase: userPurchaseCount < plan.purchase_limit_per_user
+                }
+              }
+              return {
+                ...plan,
+                user_purchase_count: 0,
+                can_purchase: true
+              }
+            })
+            
+            setPlans(plansWithLimits)
           } else {
-            setPlans([])
+            setPlans(plansData.map((plan: Plan) => ({
+              ...plan,
+              user_purchase_count: 0,
+              can_purchase: true
+            })))
           }
-        } catch (plansError) {
-          console.error('Error in plans fetch:', plansError)
+        } else {
           setPlans([])
         }
         
@@ -205,105 +165,54 @@ export default function DashboardHome() {
 
   const fetchUserStats = async (userId: string) => {
     try {
-      console.log('Fetching user stats for userId:', userId)
+      // Fetch all stats in parallel for better performance
+      const [depositsResult, withdrawalsResult, investmentsResult] = await Promise.allSettled([
+        supabase
+          .from('deposits')
+          .select('amount_pkr')
+          .eq('user_id', userId)
+          .in('status', ['approved', 'Approved', 'completed', 'Completed']),
+        supabase
+          .from('withdrawals')
+          .select('amount')
+          .eq('user_id', userId)
+          .in('status', ['approved', 'Approved']),
+        supabase
+          .from('investments')
+          .select('amount_invested, status, plans!inner(profit_percent)')
+          .eq('user_id', userId)
+          .eq('status', 'completed')
+      ])
+
+      const totalDeposits = depositsResult.status === 'fulfilled'
+        ? depositsResult.value.data?.reduce((sum, d) => sum + (d.amount_pkr || 0), 0) || 0
+        : 0
       
-      // Debug: Fetch ALL deposits to see what statuses exist
-      const { data: allDeposits, error: allDepositsError } = await supabase
-        .from('deposits')
-        .select('amount_pkr, status')
-        .eq('user_id', userId)
-
-      if (allDepositsError) {
-        console.error('Error fetching all deposits:', allDepositsError)
-      } else {
-        console.log('ALL Deposits data (for debugging):', allDeposits)
-      }
-
-      // Fetch total deposits (only approved and completed, NOT pending)
-      const { data: deposits, error: depositsError } = await supabase
-        .from('deposits')
-        .select('amount_pkr, status')
-        .eq('user_id', userId)
-        .in('status', ['approved', 'Approved', 'completed', 'Completed'])
-
-      if (depositsError) {
-        console.error('Error fetching approved deposits:', depositsError)
-      } else {
-        console.log('Approved Deposits data:', deposits)
-      }
-
-      // Fetch total withdrawals (check both 'approved' and 'Approved' status)
-      const { data: withdrawals, error: withdrawalsError } = await supabase
-        .from('withdrawals')
-        .select('amount, status')
-        .eq('user_id', userId)
-        .in('status', ['approved', 'Approved'])
-
-      if (withdrawalsError) {
-        console.error('Error fetching withdrawals:', withdrawalsError)
-      } else {
-        console.log('Withdrawals data:', withdrawals)
-      }
-
-      // Fetch total earnings from investments (calculate based on investment amount and plan profit)
-      const { data: investments, error: investmentsError } = await supabase
-        .from('investments')
-        .select(`
-          amount_invested,
-          status,
-          start_date,
-          end_date,
-          plans!inner(profit_percent, duration_days)
-        `)
-        .eq('user_id', userId)
-
-      if (investmentsError) {
-        console.error('Error fetching investments:', investmentsError)
-      } else {
-        console.log('Investments data:', investments)
-      }
-
-      // Only count APPROVED deposits (not pending ones)
-      const totalDeposits = deposits?.reduce((sum, deposit) => sum + (deposit.amount_pkr || 0), 0) || 0
-      const totalWithdrawals = withdrawals?.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0) || 0
+      const totalWithdrawals = withdrawalsResult.status === 'fulfilled'
+        ? withdrawalsResult.value.data?.reduce((sum, w) => sum + (w.amount || 0), 0) || 0
+        : 0
       
-      // Calculate total earnings based on ONLY completed investments
-      const totalEarnings = investments?.reduce((sum, investment: any) => {
-        if (investment.status === 'completed') {
-          const plan = investment.plans
-          const profitPercent = plan?.profit_percent || 0
-          const investmentAmount = investment.amount_invested || 0
-          const earnings = (investmentAmount * profitPercent) / 100
-          return sum + earnings
-        }
-        return sum
-      }, 0) || 0
+      const totalEarnings = investmentsResult.status === 'fulfilled'
+        ? investmentsResult.value.data?.reduce((sum, inv: any) => {
+            const earnings = (inv.amount_invested * (inv.plans?.profit_percent || 0)) / 100
+            return sum + earnings
+          }, 0) || 0
+        : 0
 
-      console.log('Calculated stats:', { totalDeposits, totalEarnings, totalWithdrawals })
-
-      setStats({
-        totalDeposits,
-        totalEarnings,
-        totalWithdrawals
-      })
+      setStats({ totalDeposits, totalEarnings, totalWithdrawals })
     } catch (error) {
       console.error('Error fetching user stats:', error)
-      // Set default values on error
-      setStats({
-        totalDeposits: 0,
-        totalEarnings: 0,
-        totalWithdrawals: 0
-      })
+      setStats({ totalDeposits: 0, totalEarnings: 0, totalWithdrawals: 0 })
     }
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = useCallback((amount: number) => {
     return new Intl.NumberFormat('en-PK', {
       style: 'currency',
       currency: 'PKR',
       minimumFractionDigits: 0,
     }).format(amount)
-  }
+  }, [])
 
   // Show loading screen
   if (loading) {

@@ -7,8 +7,23 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
-  }
+    detectSessionInUrl: true,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'smartgrow-auth',
+  },
+  global: {
+    headers: {
+      'x-client-info': 'smartgrow-web',
+    },
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 2,
+    },
+  },
 })
 
 export type Database = {

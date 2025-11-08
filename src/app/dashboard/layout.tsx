@@ -1,14 +1,28 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter, usePathname } from 'next/navigation'
 import { getCurrentUser, signOut } from '@/lib/auth'
-import WhatsAppSupport from '@/components/WhatsAppSupport'
-import AppInstallPrompt from '@/components/AppInstallPrompt'
-import ModernHeader from '@/components/ModernHeader'
-import ModernNavigation from '@/components/ModernNavigation'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { useAutoRefresh } from '@/hooks/useAutoRefresh'
+
+// Dynamic imports for better performance
+const WhatsAppSupport = dynamic(() => import('@/components/WhatsAppSupport'), {
+  ssr: false,
+  loading: () => null
+})
+const AppInstallPrompt = dynamic(() => import('@/components/AppInstallPrompt'), {
+  ssr: false,
+  loading: () => null
+})
+const ModernHeader = dynamic(() => import('@/components/ModernHeader'), {
+  ssr: false,
+  loading: () => <div className="h-16 bg-slate-900/50" />
+})
+const ModernNavigation = dynamic(() => import('@/components/ModernNavigation'), {
+  ssr: false,
+  loading: () => <div className="h-16 bg-slate-900/50" />
+})
 
 
 export default function DashboardLayout({
@@ -18,16 +32,8 @@ export default function DashboardLayout({
 }) {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [forceUpdate, setForceUpdate] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
-  
-  // Auto-refresh hook to prevent caching issues
-  const { clearCache, softRefresh } = useAutoRefresh({
-    enabled: true,
-    interval: 30000, // Check every 30 seconds
-    maxRetries: 3
-  })
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -40,8 +46,6 @@ export default function DashboardLayout({
 
       setUser(user)
       setLoading(false)
-      // Force update to ensure navigation renders correctly
-      setForceUpdate(prev => prev + 1)
     }
 
     checkAuth()

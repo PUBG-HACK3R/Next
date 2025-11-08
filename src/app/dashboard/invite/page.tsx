@@ -532,6 +532,36 @@ export default function InvitePage() {
           </div>
         </div>
 
+        {/* Today & Yesterday Commission Cards - Moved to Top */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">
+          <div className="flex items-center mb-4">
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg mr-3">
+              <Trophy className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-800">Commission Earnings</h2>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-3 text-white">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-green-100 text-xs">Today</span>
+                <ArrowUpRight className="w-3 h-3 text-green-200" />
+              </div>
+              <div className="text-lg font-bold">{formatCurrency(stats.todayEarnings)}</div>
+              <div className="text-green-200 text-xs">Commission</div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg p-3 text-white">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-blue-100 text-xs">Yesterday</span>
+                <TrendingUp className="w-3 h-3 text-blue-200" />
+              </div>
+              <div className="text-lg font-bold">{formatCurrency(stats.yesterdayEarnings)}</div>
+              <div className="text-blue-200 text-xs">Commission</div>
+            </div>
+          </div>
+        </div>
+
         {/* Commission Rates Card - Compact */}
         <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">
           <div className="flex items-center mb-4">
@@ -621,37 +651,6 @@ export default function InvitePage() {
             </div>
           </div>
         )}
-
-        {/* Referral Program Summary Card - Compact */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">
-          <div className="flex items-center mb-4">
-            <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg mr-3">
-              <Trophy className="w-5 h-5 text-white" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-800">Referral Program</h2>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-3 text-white">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-green-100 text-xs">Today</span>
-                <ArrowUpRight className="w-3 h-3 text-green-200" />
-              </div>
-              <div className="text-lg font-bold">{formatCurrency(stats.todayEarnings)}</div>
-              <div className="text-green-200 text-xs">Commission</div>
-            </div>
-            
-            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg p-3 text-white">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-blue-100 text-xs">Yesterday</span>
-                <TrendingUp className="w-3 h-3 text-blue-200" />
-              </div>
-              <div className="text-lg font-bold">{formatCurrency(stats.yesterdayEarnings)}</div>
-              <div className="text-blue-200 text-xs">Commission</div>
-            </div>
-          </div>
-        </div>
-
 
         {/* Active Referrals Card - Compact */}
         <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">

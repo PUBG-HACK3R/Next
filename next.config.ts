@@ -4,16 +4,27 @@ const nextConfig: NextConfig = {
   // Performance optimizations
   compress: true,
   poweredByHeader: false,
+  reactStrictMode: true,
   
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    imageSizes: [16, 32, 48, 64, 96],
+  },
+  
+  // Compiler optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
   },
   
   // Experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: ['lucide-react', 'framer-motion', '@supabase/supabase-js'],
+    optimizeCss: true,
   },
   
   async headers() {
@@ -28,45 +39,17 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/dashboard/:path*',
+        source: '/api/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate, max-age=0',
-          },
-          {
-            key: 'Pragma',
-            value: 'no-cache',
-          },
-          {
-            key: 'Expires',
-            value: '0',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            value: 'no-cache, no-store, must-revalidate',
           },
         ],
       },
       {
-        source: '/(.*)',
+        source: '/:path*',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate, max-age=0',
-          },
-          {
-            key: 'Pragma',
-            value: 'no-cache',
-          },
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
@@ -83,6 +66,12 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  
+  // Optimize production builds
+  productionBrowserSourceMaps: false,
+  
+  // Turbopack configuration (Next.js 16+)
+  turbopack: {},
 };
 
 export default nextConfig;
