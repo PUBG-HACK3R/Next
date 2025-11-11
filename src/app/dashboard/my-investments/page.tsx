@@ -17,7 +17,10 @@ import {
   Archive,
   ArrowUpRight,
   Eye,
-  EyeOff
+  EyeOff,
+  Zap,
+  Award,
+  Lock as LockIcon
 } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
 
@@ -310,7 +313,7 @@ export default function MyInvestmentsPage() {
     const totalDuration = end.getTime() - start.getTime()
     const elapsed = now.getTime() - start.getTime()
     
-    return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100))
+    return Math.round(Math.min(100, Math.max(0, (elapsed / totalDuration) * 100)))
   }
 
   const getStatusColor = (status: string) => {
@@ -372,53 +375,62 @@ export default function MyInvestmentsPage() {
         </Link>
       </div>
 
-      {/* Stats Grid - 2 Rows */}
-      <div className="space-y-2">
-        {/* First Row - 3 Cards */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-white rounded-md p-2 border border-gray-200">
-            <div className="flex items-center space-x-1 mb-1">
-              <DollarSign className="w-3 h-3 text-blue-600" />
-              <span className="text-[10px] text-gray-600">Total Invested</span>
+      {/* Stats Grid - Neumorphism Design */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        {/* Total Invested */}
+        <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg p-2.5 shadow-lg hover:shadow-inner transition-all duration-300">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="p-1 bg-blue-500 rounded-md shadow-md">
+              <DollarSign className="w-3.5 h-3.5 text-white" />
             </div>
-            <p className="text-xs font-bold text-gray-900">{formatCurrency(stats.totalInvested)}</p>
+            <p className="text-[9px] text-gray-600 font-semibold">Total Invested</p>
           </div>
-
-          <div className="bg-white rounded-md p-2 border border-gray-200">
-            <div className="flex items-center space-x-1 mb-1">
-              <TrendingUp className="w-3 h-3 text-green-600" />
-              <span className="text-[10px] text-gray-600">Active</span>
-            </div>
-            <p className="text-xs font-bold text-gray-900">{stats.activeInvestments}</p>
-          </div>
-
-          <div className="bg-white rounded-md p-2 border border-gray-200">
-            <div className="flex items-center space-x-1 mb-1">
-              <CheckCircle className="w-3 h-3 text-blue-600" />
-              <span className="text-[10px] text-gray-600">Completed</span>
-            </div>
-            <p className="text-xs font-bold text-gray-900">{stats.completedInvestments}</p>
-          </div>
+          <p className="text-sm font-black text-gray-900">{formatCurrency(stats.totalInvested)}</p>
         </div>
 
-        {/* Second Row - 2 Cards */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white rounded-md p-2 border border-gray-200">
-            <div className="flex items-center space-x-1 mb-1">
-              <DollarSign className="w-3 h-3 text-green-600" />
-              <span className="text-[10px] text-gray-600">Total Earnings</span>
+        {/* Active */}
+        <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg p-2.5 shadow-lg hover:shadow-inner transition-all duration-300">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="p-1 bg-green-500 rounded-md shadow-md">
+              <TrendingUp className="w-3.5 h-3.5 text-white" />
             </div>
-            <p className="text-xs font-bold text-gray-900">{formatCurrency(stats.totalEarnings)}</p>
+            <p className="text-[9px] text-gray-600 font-semibold">Active</p>
           </div>
+          <p className="text-sm font-black text-gray-900">{stats.activeInvestments}</p>
+        </div>
 
-          <div className="bg-white rounded-md p-2 border border-gray-200">
-            <div className="flex items-center space-x-1 mb-1">
-              <Clock className="w-3 h-3 text-orange-600" />
-              <span className="text-[10px] text-gray-600">Locked Earnings</span>
+        {/* Completed */}
+        <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg p-2.5 shadow-lg hover:shadow-inner transition-all duration-300">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="p-1 bg-purple-500 rounded-md shadow-md">
+              <CheckCircle className="w-3.5 h-3.5 text-white" />
             </div>
-            <p className="text-xs font-bold text-gray-900">{formatCurrency(profile?.earned_balance || 0)}</p>
-            <p className="text-[9px] text-gray-500 mt-0.5">Available on completion</p>
+            <p className="text-[9px] text-gray-600 font-semibold">Completed</p>
           </div>
+          <p className="text-sm font-black text-gray-900">{stats.completedInvestments}</p>
+        </div>
+
+        {/* Total Earnings */}
+        <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg p-2.5 shadow-lg hover:shadow-inner transition-all duration-300">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="p-1 bg-orange-500 rounded-md shadow-md">
+              <Archive className="w-3.5 h-3.5 text-white" />
+            </div>
+            <p className="text-[9px] text-gray-600 font-semibold">Total Earnings</p>
+          </div>
+          <p className="text-sm font-black text-gray-900">{formatCurrency(stats.totalEarnings)}</p>
+        </div>
+
+        {/* Locked Earnings */}
+        <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg p-2.5 shadow-lg hover:shadow-inner transition-all duration-300">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="p-1 bg-gradient-to-br from-red-500 to-rose-600 rounded-md shadow-lg">
+              <LockIcon className="w-3.5 h-3.5 text-yellow-300 stroke-[2.5]" />
+            </div>
+            <p className="text-[9px] text-gray-600 font-semibold">Locked Earnings</p>
+          </div>
+          <p className="text-sm font-black text-gray-900">{formatCurrency(profile?.earned_balance || 0)}</p>
+          <p className="text-[8px] text-gray-600 mt-1">Available on Completion</p>
         </div>
       </div>
 
@@ -451,109 +463,141 @@ export default function MyInvestmentsPage() {
                 : expectedProfit
 
               return (
-                <div key={investment.id} className="bg-white rounded-lg p-3 border-l-4 border-blue-500 shadow-md hover:shadow-lg transition-shadow duration-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-base font-bold text-gray-800">{investment.plans.name}</h4>
-                    <span className={`inline-flex items-center space-x-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(investment.status)}`}>
-                      {getStatusIcon(investment.status)}
-                      <span className="capitalize">{investment.status}</span>
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mb-3">Started on {formatDate(investment.start_date)}</p>
-
-                  <div className="grid grid-cols-4 gap-1 mb-2 text-xs">
-                    <div>
-                      <span className="text-xs text-gray-500 font-medium">Investment Amount</span>
-                      <p className="text-xs font-bold text-gray-900">{formatCurrency(investment.amount_invested)}</p>
+                <div key={investment.id} className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-lg hover:shadow-xl transition-all duration-300">
+                  {/* Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <div className="flex-1">
+                      <h3 className="text-base md:text-lg font-black text-gray-800 mb-0.5">{investment.plans.name}</h3>
+                      <p className="text-[10px] md:text-xs text-gray-600">Started {formatDate(investment.start_date)}</p>
                     </div>
-                    <div>
-                      <span className="text-xs text-gray-500 font-medium">Profit Rate</span>
-                      <p className="text-xs font-bold text-green-600">{investment.plans.profit_percent}%</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-gray-500 font-medium">Duration</span>
-                      <p className="text-xs font-bold text-gray-900">{investment.plans.duration_days} days</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-gray-500 font-medium">Total Profit</span>
-                      <p className="text-xs font-bold text-blue-600">{formatCurrency(expectedProfit)}</p>
+                    <div className="px-3 py-1 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full shadow-inner">
+                      <span className={`text-[10px] md:text-xs font-bold flex items-center gap-1 ${
+                        investment.status === 'active' ? 'text-green-600' : 'text-blue-600'
+                      }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                          investment.status === 'active' ? 'bg-green-500' : 'bg-blue-500'
+                        }`}></div>
+                        <span className="capitalize">{investment.status}</span>
+                      </span>
                     </div>
                   </div>
 
-                  {/* Daily Income Collection - Compact */}
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+                    <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg p-2 shadow-md hover:shadow-inner transition-all duration-300">
+                      <div className="flex items-center gap-1 mb-1">
+                        <div className="p-1 bg-blue-500 rounded-md shadow-sm">
+                          <DollarSign className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
+                        </div>
+                        <p className="text-gray-600 text-[8px] md:text-[9px] font-semibold">Invested</p>
+                      </div>
+                      <p className="text-gray-900 font-black text-[10px] md:text-xs truncate">{formatCurrency(investment.amount_invested)}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg p-2 shadow-md hover:shadow-inner transition-all duration-300">
+                      <div className="flex items-center gap-1 mb-1">
+                        <div className="p-1 bg-green-500 rounded-md shadow-sm">
+                          <TrendingUp className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
+                        </div>
+                        <p className="text-gray-600 text-[8px] md:text-[9px] font-semibold">Profit</p>
+                      </div>
+                      <p className="text-green-600 font-black text-[10px] md:text-xs">{investment.plans.profit_percent}%</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg p-2 shadow-md hover:shadow-inner transition-all duration-300">
+                      <div className="flex items-center gap-1 mb-1">
+                        <div className="p-1 bg-purple-500 rounded-md shadow-sm">
+                          <Clock className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
+                        </div>
+                        <p className="text-gray-600 text-[8px] md:text-[9px] font-semibold">Days</p>
+                      </div>
+                      <p className="text-gray-900 font-black text-[10px] md:text-xs">{investment.plans.duration_days}d</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg p-2 shadow-md hover:shadow-inner transition-all duration-300">
+                      <div className="flex items-center gap-1 mb-1">
+                        <div className="p-1 bg-pink-500 rounded-md shadow-sm">
+                          <Award className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
+                        </div>
+                        <p className="text-gray-600 text-[8px] md:text-[9px] font-semibold">Profit</p>
+                      </div>
+                      <p className="text-blue-600 font-black text-[10px] md:text-xs truncate">{formatCurrency(expectedProfit)}</p>
+                    </div>
+                  </div>
+
+                  {/* Collection Section - Only for Active Investments */}
                   {investment.status === 'active' && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-2 mb-2">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h5 className="text-xs font-medium text-blue-900">Daily Profit: {formatCurrency(investment.daily_profit_amount || (investment.amount_invested * investment.plans.profit_percent / 100) / investment.plans.duration_days)}</h5>
+                    <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg md:rounded-xl p-3 md:p-4 mb-3 shadow-inner">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Zap className="w-3 h-3 md:w-4 md:h-4 text-green-600" />
+                            <p className="text-gray-700 text-[10px] md:text-xs font-bold">Daily Profit Available</p>
+                          </div>
+                          <p className="text-gray-900 font-black text-lg md:text-xl mb-2">
+                            {formatCurrency(investment.daily_profit_amount || (investment.amount_invested * investment.plans.profit_percent / 100) / investment.plans.duration_days)}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 text-[9px] md:text-[10px] text-gray-600">
+                            <span className="flex items-center gap-0.5">
+                              <CheckCircle className="w-2.5 h-2.5" />
+                              {investment.total_days_collected || 0}/{investment.plans.duration_days}
+                            </span>
+                            <span>•</span>
+                            <span>Last: {investment.last_income_collection_date ? formatDate(investment.last_income_collection_date) : 'Never'}</span>
+                          </div>
                         </div>
                         <button
                           onClick={() => collectDailyIncome(investment.id)}
                           disabled={!canCollectToday(investment) || collectingIncome === investment.id}
-                          className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                          className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 text-xs md:text-sm ${
                             canCollectToday(investment) && collectingIncome !== investment.id
-                              ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl'
-                              : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
+                              ? 'bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white'
+                              : 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-50'
                           }`}
                         >
-                          <TrendingUp className="w-3 h-3" />
-                          <span>{collectingIncome === investment.id ? 'Collecting...' : 'Collect'}</span>
+                          {collectingIncome === investment.id ? 'COLLECTING...' : 'COLLECT'}
                         </button>
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-blue-600">Days Collected:</span>
-                          <span className="font-medium ml-1">{investment.total_days_collected || 0} / {investment.plans.duration_days}</span>
-                        </div>
-                        <div>
-                          <span className="text-blue-600">Last Collection:</span>
-                          <span className="font-medium ml-1">
-                            {investment.last_income_collection_date 
-                              ? formatDate(investment.last_income_collection_date)
-                              : 'Never'
-                            }
-                          </span>
-                        </div>
-                      </div>
                     </div>
                   )}
 
-                  {investment.status === 'active' && investment.end_date && (
-                    <div className="mb-1">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-gray-600">Progress</span>
-                        <span className="text-gray-900 font-medium">{daysRemaining} days remaining</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1">
-                        <div 
-                          className="bg-green-600 h-1 rounded-full transition-all duration-300"
-                          style={{ width: `${progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-
-
+                  {/* Completed Status */}
                   {investment.status === 'completed' && (
-                    <div className="bg-green-50 border border-green-200 rounded-md p-2">
-                      <div className="flex items-center space-x-2">
-                        <CheckCircle className="w-3 h-3 text-green-600" />
-                        <span className="text-xs font-medium text-green-900">
-                          Investment completed! Earned {formatCurrency(expectedProfit)}
+                    <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg p-2.5 mb-3 shadow-[inset_3px_3px_6px_#b8b9be,inset_-3px_-3px_6px_#ffffff]">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+                        <span className="text-[10px] md:text-xs font-bold text-green-900">
+                          Completed! Earned {formatCurrency(expectedProfit)}
                         </span>
                       </div>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-2">
-                    <div className="flex items-center space-x-2 text-xs text-gray-500">
-                      <span className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3" />
+                  {/* Progress - Only for Active Investments */}
+                  {investment.status === 'active' && investment.end_date && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gray-700 text-[10px] md:text-xs font-bold">Progress</span>
+                        <span className="text-gray-900 font-black text-[10px] md:text-xs">{daysRemaining} days left</span>
+                      </div>
+                      <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-full h-3 md:h-3.5 shadow-inner overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500 shadow-lg"
+                          style={{ width: `${progress}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-right mt-1">
+                        <span className="text-blue-600 font-bold text-[9px] md:text-[10px]">{progress}%</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Footer Info */}
+                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-gray-400/30">
+                    <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] text-gray-600">
+                      <span className="flex items-center gap-0.5">
+                        <Calendar className="w-2.5 h-2.5" />
                         <span>ID: {investment.id}</span>
                       </span>
                       {investment.plans.capital_return && (
-                        <span className="text-green-600">✓ Capital Return</span>
+                        <span className="text-green-600 font-semibold">✓ Capital Return</span>
                       )}
                     </div>
                   </div>
