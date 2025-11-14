@@ -107,6 +107,15 @@ export default function MyInvestmentsPage() {
 
   const fetchInvestments = async (userId: string) => {
     try {
+      // First, update any expired investments to completed status
+      const now = new Date()
+      await supabase
+        .from('investments')
+        .update({ status: 'completed' })
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .lte('end_date', now.toISOString())
+
       const { data, error } = await supabase
         .from('investments')
         .select(`
@@ -134,6 +143,15 @@ export default function MyInvestmentsPage() {
 
   const fetchExpiredInvestments = async (userId: string) => {
     try {
+      // First, update any expired investments to completed status
+      const now = new Date()
+      await supabase
+        .from('investments')
+        .update({ status: 'completed' })
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .lte('end_date', now.toISOString())
+
       const { data, error } = await supabase
         .from('investments')
         .select(`

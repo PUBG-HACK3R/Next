@@ -230,3 +230,89 @@ html, body {
     height: 16px;
   }
 }
+
+/* Fast loading optimizations */
+.fast-load {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
+
+/* Skeleton loading animations */
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+/* Optimize for data loading */
+.data-loading {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Virtual scrolling container */
+.virtual-scroll {
+  height: 400px;
+  overflow-y: auto;
+  contain: strict;
+}
+
+/* Lazy loading placeholder */
+.lazy-placeholder {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+/* Optimize form performance */
+.fast-form input,
+.fast-form select,
+.fast-form textarea {
+  will-change: auto;
+  contain: layout;
+}
+
+/* Critical CSS for above-the-fold content */
+.critical-content {
+  contain: layout style;
+  will-change: auto;
+}
+
+/* Defer non-critical animations */
+.defer-animation {
+  animation-delay: 0.5s;
+  animation-fill-mode: both;
+}
+
+/* Memory-efficient gradients */
+.efficient-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-attachment: local;
+}
+
+/* Fast transitions for mobile */
+@media (max-width: 768px) {
+  .mobile-fast-transition {
+    transition-duration: 0.15s !important;
+  }
+  
+  .mobile-no-animation {
+    animation: none !important;
+    transition: none !important;
+  }
+}
