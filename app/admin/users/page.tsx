@@ -29,6 +29,9 @@ interface User {
   withdrawal_account_number: string | null
   created_at: string
   email?: string
+  suspended?: boolean
+  suspended_at?: string
+  suspension_reason?: string
 }
 
 interface UserStats {
@@ -73,6 +76,9 @@ export default function AdminUsersPage() {
   const [newPassword, setNewPassword] = useState('')
   const [showPasswordReset, setShowPasswordReset] = useState(false)
   const [passwordLoading, setPasswordLoading] = useState(false)
+  const [suspending, setSuspending] = useState(false)
+  const [suspensionReason, setSuspensionReason] = useState('')
+  const [showSuspensionModal, setShowSuspensionModal] = useState(false)
 
   useEffect(() => {
     fetchUsers()
@@ -381,6 +387,76 @@ export default function AdminUsersPage() {
       alert('Error resetting password')
     }
     setResettingPassword(false)
+  }
+
+  const suspendUser = async () => {
+    if (!selectedUser) return
+
+    setSuspending(true)
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          suspended: true,
+          suspended_at: new Date().toISOString(),
+          suspension_reason: suspensionReason || 'Suspended by admin'
+        })
+        .eq('id', selectedUser.id)
+
+      if (error) throw error
+
+      // Update local state
+      const updatedUser = {
+        ...selectedUser,
+        suspended: true,
+        suspended_at: new Date().toISOString(),
+        suspension_reason: suspensionReason
+      }
+      
+      setUsers(users.map(u => u.id === selectedUser.id ? updatedUser : u))
+      setSelectedUser(updatedUser)
+      setShowSuspensionModal(false)
+      setSuspensionReason('')
+      alert('User suspended successfully!')
+    } catch (error: any) {
+      console.error('Error suspending user:', error)
+      alert('Failed to suspend user: ' + error.message)
+    }
+    setSuspending(false)
+  }
+
+  const unsuspendUser = async () => {
+    if (!selectedUser) return
+
+    setSuspending(true)
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          suspended: false,
+          suspended_at: null,
+          suspension_reason: null
+        })
+        .eq('id', selectedUser.id)
+
+      if (error) throw error
+
+      // Update local state
+      const updatedUser = {
+        ...selectedUser,
+        suspended: false,
+        suspended_at: undefined,
+        suspension_reason: undefined
+      }
+      
+      setUsers(users.map(u => u.id === selectedUser.id ? updatedUser : u))
+      setSelectedUser(updatedUser)
+      alert('User unsuspended successfully!')
+    } catch (error: any) {
+      console.error('Error unsuspending user:', error)
+      alert('Failed to unsuspend user: ' + error.message)
+    }
+    setSuspending(false)
   }
 
   if (loading) {

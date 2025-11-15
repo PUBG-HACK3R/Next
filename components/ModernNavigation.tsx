@@ -62,7 +62,8 @@ export default function ModernNavigation({ variant = 'bottom', isAdmin = false }
     { href: '/admin/users', icon: Users, label: 'Users' },
     { href: '/admin/deposits', icon: PlusCircle, label: 'Deposits' },
     { href: '/admin/withdrawals', icon: Wallet, label: 'Withdrawals' },
-    { href: '/admin/rankings', icon: Crown, label: 'Rankings' },
+    { href: '/admin/assign-plan', icon: TrendingUp, label: 'Assign Plans' },
+    { href: '/admin/referral-tree', icon: Crown, label: 'Referral Tree' },
     { href: '/admin/settings', icon: Settings, label: 'Settings' }
   ]
 

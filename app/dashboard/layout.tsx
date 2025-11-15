@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter, usePathname } from 'next/navigation'
 import { getCurrentUser, signOut } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
 import ErrorBoundary from '@/components/ErrorBoundary'
 
 // Dynamic imports for better performance
@@ -44,8 +45,48 @@ export default function DashboardLayout({
         return
       }
 
+      // Check if user is suspended
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('suspended, suspension_reason')
+        .eq('id', user.id)
+        .single()
+
+      if (profileData?.suspended) {
+        // User is suspended, log them out
+        console.log('User is suspended, logging out...')
+        await signOut()
+        router.push('/login?suspended=true&reason=' + encodeURIComponent(profileData.suspension_reason || 'Your account has been suspended'))
+        return
+      }
+
       setUser(user)
       setLoading(false)
+
+      // Subscribe to real-time suspension updates
+      const subscription = supabase
+        .channel(`user-suspension-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'user_profiles',
+            filter: `id=eq.${user.id}`
+          },
+          async (payload: any) => {
+            if (payload.new?.suspended) {
+              console.log('User suspension detected, logging out...')
+              await signOut()
+              router.push('/login?suspended=true&reason=' + encodeURIComponent(payload.new.suspension_reason || 'Your account has been suspended'))
+            }
+          }
+        )
+        .subscribe()
+
+      return () => {
+        subscription.unsubscribe()
+      }
     }
 
     checkAuth()

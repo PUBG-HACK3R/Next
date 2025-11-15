@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { signIn } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Sparkles, ArrowRight, Shield, TrendingUp, Users, HelpCircle } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
@@ -31,6 +32,19 @@ export default function LoginPage() {
       setError(error.message)
       setLoading(false)
     } else if (data.user) {
+      // Check if user is suspended
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('suspended, suspension_reason')
+        .eq('id', data.user.id)
+        .single()
+
+      if (profileData?.suspended) {
+        setError(`Your account is suspended. ${profileData.suspension_reason ? 'Reason: ' + profileData.suspension_reason : 'Please contact customer support for assistance.'}`)
+        setLoading(false)
+        return
+      }
+
       // Get user name from metadata or email
       const displayName = data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User'
       setUserName(displayName)

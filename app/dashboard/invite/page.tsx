@@ -22,7 +22,6 @@ import {
   ChevronDown,
   Star,
   Trophy,
-  Zap,
   Crown
 } from 'lucide-react'
 import AgentEligibilityCard from '@/components/AgentEligibilityCard'
