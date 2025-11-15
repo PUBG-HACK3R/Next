@@ -17,7 +17,7 @@ import {
   Loader
 } from 'lucide-react'
 
-interface ReferralUser {
+interface UserData {
   id: string
   full_name: string
   email: string
@@ -26,6 +26,9 @@ interface ReferralUser {
   referred_by: string | null
   user_level: number
   created_at: string
+}
+
+interface ReferralUser extends UserData {
   referrals: ReferralUser[]
 }
 
@@ -81,20 +84,28 @@ export default function ReferralTreePage() {
 
       if (error) throw error
 
-      setAllUsers(users || [])
-
+      const userData = (users || []) as UserData[]
+      
       // Build tree structure
-      const usersMap = new Map(users?.map(u => [u.id, { ...u, referrals: [] }]) || [])
+      const usersMap = new Map<string, ReferralUser>(
+        userData.map(u => [u.id, { ...u, referrals: [] }])
+      )
       const rootNodes: ReferralUser[] = []
 
-      users?.forEach(user => {
+      userData.forEach(user => {
         if (user.referred_by) {
           const referrer = usersMap.get(user.referred_by)
           if (referrer) {
-            referrer.referrals.push(usersMap.get(user.id)!)
+            const child = usersMap.get(user.id)
+            if (child) {
+              referrer.referrals.push(child)
+            }
           }
         } else {
-          rootNodes.push(usersMap.get(user.id)!)
+          const rootUser = usersMap.get(user.id)
+          if (rootUser) {
+            rootNodes.push(rootUser)
+          }
         }
       })
 
@@ -103,15 +114,19 @@ export default function ReferralTreePage() {
       setTreeData(tree)
 
       // Calculate stats
-      const totalReferrals = users?.filter(u => u.referred_by).length || 0
-      const totalEarnings = users?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0
-      const topReferrer = users?.reduce((max, u) => {
-        const referralCount = users.filter(x => x.referred_by === u.id).length
-        return referralCount > (max?.count || 0) ? { ...u, count: referralCount } : max
-      }, null)
+      const totalReferrals = userData.filter(u => u.referred_by).length
+      const totalEarnings = userData.reduce((sum, u) => sum + (u.balance || 0), 0)
+      
+      let topReferrer: (UserData & { count: number }) | null = null
+      userData.forEach(u => {
+        const referralCount = userData.filter(x => x.referred_by === u.id).length
+        if (referralCount > (topReferrer?.count || 0)) {
+          topReferrer = { ...u, count: referralCount }
+        }
+      })
 
       setStats({
-        totalUsers: users?.length || 0,
+        totalUsers: userData.length,
         totalReferrals,
         totalEarnings,
         topReferrer
