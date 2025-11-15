@@ -1,0 +1,146 @@
+/* Admin Panel Dark Theme - Force White Text */
+
+/* Force all text in admin panel to be white with !important */
+main * {
+  color: white !important;
+}
+
+/* Exception for specific colored elements that should keep their colors */
+main .text-green-400,
+main .text-green-300,
+main .text-blue-400,
+main .text-blue-300,
+main .text-yellow-400,
+main .text-yellow-300,
+main .text-orange-400,
+main .text-orange-300,
+main .text-red-400,
+main .text-red-300,
+main .text-purple-400,
+main .text-purple-300 {
+  color: inherit !important;
+}
+
+/* Form inputs and textareas */
+main input,
+main textarea,
+main select {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+main input:focus,
+main textarea:focus,
+main select:focus {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+main input::placeholder,
+main textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Tables */
+main table th,
+main table td {
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+main table thead {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Cards and containers */
+main .bg-white {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Buttons - keep their original colors but ensure text is visible */
+main button {
+  color: white !important;
+}
+
+/* Links */
+main a {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+main a:hover {
+  color: white !important;
+}
+
+/* Badges and status indicators */
+main .bg-blue-100,
+main .bg-green-100,
+main .bg-yellow-100,
+main .bg-red-100,
+main .bg-purple-100 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Modal backgrounds */
+main .bg-gray-50 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Ensure all text elements are visible */
+main h1, main h2, main h3, main h4, main h5, main h6,
+main p, main span, main div, main label {
+  color: white !important;
+}
+
+/* Small text and secondary text */
+main .text-xs,
+main .text-sm {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Fix for user management hover states */
+main table tr:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+main table tr:hover * {
+  color: white !important;
+}
+
+/* Fix for user details modal */
+main .fixed.inset-0 .bg-white {
+  background-color: rgba(30, 58, 138, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+main .fixed.inset-0 .bg-white * {
+  color: white !important;
+}
+
+/* Fix for modal cards and statistics */
+main .bg-green-50,
+main .bg-red-50,
+main .bg-blue-50,
+main .bg-purple-50 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+main .bg-green-50 *,
+main .bg-red-50 *,
+main .bg-blue-50 *,
+main .bg-purple-50 * {
+  color: white !important;
+}
+
+/* Fix for hover states on all elements */
+main *:hover {
+  color: white !important;
+}
+
+/* Fix for gray backgrounds in modals */
+main .bg-gray-50 {
+  background-color: rgba(30, 58, 138, 0.3) !important;
+}

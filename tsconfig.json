@@ -24,8 +24,14 @@
     ],
     "paths": {
       "@/*": [
-        "./src/*"
-      ]
+        "./*"
+      ],
+      "@/app/*": ["./app/*"],
+      "@/components/*": ["./components/*"],
+      "@/lib/*": ["./lib/*"],
+      "@/providers/*": ["./providers/*"],
+      "@/styles/*": ["./styles/*"],
+      "@/hooks/*": ["./hooks/*"]
     }
   },
   "include": [
