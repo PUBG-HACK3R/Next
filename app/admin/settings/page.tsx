@@ -67,10 +67,10 @@ export default function AdminSettingsPage() {
   const [success, setSuccess] = useState('')
 
   // Form states
-  const [referralL1, setReferralL1] = useState(5)
-  const [referralL1Deposit, setReferralL1Deposit] = useState(5)
-  const [referralL2, setReferralL2] = useState(3)
-  const [referralL3, setReferralL3] = useState(2)
+  const [referralL1, setReferralL1] = useState(0)
+  const [referralL1Deposit, setReferralL1Deposit] = useState(0)
+  const [referralL2, setReferralL2] = useState(0)
+  const [referralL3, setReferralL3] = useState(0)
   const [minDepositAmount, setMinDepositAmount] = useState(500)
   const [minWithdrawalAmount, setMinWithdrawalAmount] = useState(100)
   const [withdrawalFeePercent, setWithdrawalFeePercent] = useState(3)
