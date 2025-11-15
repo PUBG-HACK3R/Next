@@ -570,7 +570,7 @@ export default function InvitePage() {
         </div>
 
         {/* Commission Rates Card - Compact */}
-        <div className="relative bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">
           <div className="flex items-center mb-4">
             <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg mr-3">
               <DollarSign className="w-5 h-5 text-white" />
@@ -628,29 +628,6 @@ export default function InvitePage() {
               <div className="text-right">
                 <div className="text-lg font-bold text-purple-600">{formatCurrency(stats.level3Earnings)}</div>
                 <div className="text-purple-500 text-xs">3rd level referrals</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Blur Notice Overlay */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-xl flex items-center justify-center">
-            <div className="bg-white/95 backdrop-blur-md rounded-lg p-6 max-w-sm mx-4 shadow-2xl border border-white/20">
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-100 rounded-full mb-4">
-                  <Zap className="w-6 h-6 text-amber-600" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-800 mb-2">Commissions Temporarily Disabled</h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Commission payouts are currently suspended. If your referral deposit succeeds, please contact customer support to receive your commission bonus.
-                </p>
-                <a
-                  href={`https://wa.me/${settings?.whatsapp_support_number || '1234567890'}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-200 text-sm"
-                >
-                  <span>Contact Support</span>
-                </a>
               </div>
             </div>
           </div>
