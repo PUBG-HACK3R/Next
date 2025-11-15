@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { getCurrentUser } from '@/lib/auth'
 import { 
   Users, 
   Search, 
@@ -11,7 +12,10 @@ import {
   TrendingUp,
   Calendar,
   Shield,
-  RefreshCw
+  RefreshCw,
+  Key,
+  Lock,
+  Unlock
 } from 'lucide-react'
 
 interface User {
@@ -34,6 +38,19 @@ interface UserStats {
   referralCount: number
 }
 
+interface PasswordInfo {
+  user_id: string
+  email: string
+  created_at: string
+  last_sign_in_at: string | null
+  email_confirmed_at: string | null
+  password_info: {
+    has_password: boolean
+    last_password_change: string
+    note: string
+  }
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
@@ -50,6 +67,12 @@ export default function AdminUsersPage() {
     name: '',
     number: ''
   })
+  const [passwordInfo, setPasswordInfo] = useState<PasswordInfo | null>(null)
+  const [showPasswordInfo, setShowPasswordInfo] = useState(false)
+  const [resettingPassword, setResettingPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [showPasswordReset, setShowPasswordReset] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
 
   useEffect(() => {
     fetchUsers()
@@ -288,6 +311,78 @@ export default function AdminUsersPage() {
     }
   }
 
+  const fetchPasswordInfo = async (userId: string) => {
+    setPasswordLoading(true)
+    try {
+      // Get current user session to pass to API
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert('Please log in again')
+        return
+      }
+
+      const response = await fetch(`/api/admin/users/password?userId=${userId}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setPasswordInfo(data)
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Failed to fetch password info:', errorData)
+        alert('Failed to fetch password information: ' + (errorData.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error fetching password info:', error)
+      alert('Error fetching password information')
+    }
+    setPasswordLoading(false)
+  }
+
+  const resetUserPassword = async () => {
+    if (!selectedUser || !newPassword) return
+
+    setResettingPassword(true)
+    try {
+      // Get current user session to pass to API
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert('Please log in again')
+        return
+      }
+
+      const response = await fetch('/api/admin/users/password', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          newPassword: newPassword
+        })
+      })
+
+      if (response.ok) {
+        alert('Password reset successfully!')
+        setShowPasswordReset(false)
+        setNewPassword('')
+      } else {
+        const error = await response.json()
+        alert('Failed to reset password: ' + error.error)
+      }
+    } catch (error) {
+      console.error('Error resetting password:', error)
+      alert('Error resetting password')
+    }
+    setResettingPassword(false)
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -427,6 +522,10 @@ export default function AdminUsersPage() {
                     setUserStats(null)
                     setEditingBalance(false)
                     setNewBalance('')
+                    setPasswordInfo(null)
+                    setShowPasswordInfo(false)
+                    setShowPasswordReset(false)
+                    setNewPassword('')
                   }}
                   className="text-gray-500 hover:text-gray-700"
                 >
@@ -579,6 +678,112 @@ export default function AdminUsersPage() {
                     )}
                   </div>
                 )}
+              </div>
+
+              {/* Password Management */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Password Management</h4>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => {
+                        setShowPasswordInfo(true)
+                        fetchPasswordInfo(selectedUser.id)
+                      }}
+                      disabled={passwordLoading}
+                      className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>{passwordLoading ? 'Loading...' : 'Show Password Info'}</span>
+                    </button>
+                    <button
+                      onClick={() => setShowPasswordReset(true)}
+                      className="flex items-center space-x-2 px-3 py-2 bg-orange-600 text-white rounded text-sm hover:bg-orange-700"
+                    >
+                      <Key className="w-4 h-4" />
+                      <span>Reset Password</span>
+                    </button>
+                  </div>
+
+                  {/* Password Info Modal */}
+                  {showPasswordInfo && passwordInfo && (
+                    <div className="mt-4 p-4 bg-white border rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="font-medium text-gray-900">Password Information</h5>
+                        <button
+                          onClick={() => {
+                            setShowPasswordInfo(false)
+                            setPasswordInfo(null)
+                          }}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div><span className="font-medium text-gray-700">Email:</span> {passwordInfo.email}</div>
+                        <div><span className="font-medium text-gray-700">Account Created:</span> {formatDate(passwordInfo.created_at)}</div>
+                        <div><span className="font-medium text-gray-700">Last Sign In:</span> {passwordInfo.last_sign_in_at ? formatDate(passwordInfo.last_sign_in_at) : 'Never'}</div>
+                        <div><span className="font-medium text-gray-700">Email Confirmed:</span> {passwordInfo.email_confirmed_at ? 'Yes' : 'No'}</div>
+                        <div><span className="font-medium text-gray-700">Password Status:</span> {passwordInfo.password_info.has_password ? 'Set' : 'Not Set'}</div>
+                        <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                          <p className="text-xs text-yellow-800">{passwordInfo.password_info.note}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Password Reset Modal */}
+                  {showPasswordReset && (
+                    <div className="mt-4 p-4 bg-white border rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="font-medium text-gray-900">Reset User Password</h5>
+                        <button
+                          onClick={() => {
+                            setShowPasswordReset(false)
+                            setNewPassword('')
+                          }}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                          <input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Enter new password (min 6 characters)"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={resetUserPassword}
+                            disabled={resettingPassword || !newPassword || newPassword.length < 6}
+                            className="px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {resettingPassword ? 'Resetting...' : 'Reset Password'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowPasswordReset(false)
+                              setNewPassword('')
+                            }}
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        <div className="p-2 bg-red-50 border border-red-200 rounded">
+                          <p className="text-xs text-red-800">⚠️ This will immediately change the user's password. The user will need to use the new password to log in.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* User Stats */}

@@ -193,6 +193,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (action === 'approve') {
+      console.log(`[APPROVE] Starting deposit approval for deposit ${deposit_id}`)
+      
       // Get deposit details first
       const { data: deposit, error: depositFetchError } = await supabase
         .from('deposits')
@@ -212,8 +214,7 @@ export async function PATCH(request: NextRequest) {
       }
       
       if (currentAdmin) {
-        updateData.approved_by = currentAdmin.id
-        updateData.approved_at = new Date().toISOString()
+        updateData.processed_by = currentAdmin.id
       }
 
       const { error: approveError } = await supabase
@@ -239,11 +240,111 @@ export async function PATCH(request: NextRequest) {
           .from('deposits')
           .update({ status: 'pending' })
           .eq('id', deposit_id)
-        return NextResponse.json({ error: 'Failed to update user balance' }, { status: 500 })
+        return NextResponse.json({ 
+          error: 'Failed to update user balance',
+          details: balanceError.message || JSON.stringify(balanceError)
+        }, { status: 500 })
       }
 
-      // NOTE: Referral commissions are handled automatically by database trigger
-      // when deposit status changes to 'approved' - no manual processing needed
+      // Process referral commissions immediately
+      try {
+        console.log(`[COMMISSION] Starting commission processing for deposit ${deposit_id}, user ${deposit.user_id}, amount ${deposit.amount_pkr}`)
+        
+        // Get commission percentages from admin settings
+        const { data: settings, error: settingsError } = await supabase
+          .from('admin_settings')
+          .select('referral_l1_percent, referral_l2_percent, referral_l3_percent')
+          .eq('id', 1)
+          .single()
+
+        console.log(`[COMMISSION] Settings loaded:`, { settingsError, settings })
+
+        if (!settingsError && settings) {
+          // Get user's referrer
+          const { data: userProfile } = await supabase
+            .from('user_profiles')
+            .select('referred_by')
+            .eq('id', deposit.user_id)
+            .single()
+
+          console.log(`[COMMISSION] User profile:`, { userProfile })
+
+          if (userProfile?.referred_by) {
+            let currentReferrerId = userProfile.referred_by
+            const commissionRates = [
+              settings.referral_l1_percent,
+              settings.referral_l2_percent,
+              settings.referral_l3_percent
+            ]
+
+            console.log(`[COMMISSION] Processing commissions for referrer chain starting with:`, currentReferrerId)
+
+            // Process up to 3 levels of referrals
+            for (let level = 1; level <= 3 && currentReferrerId; level++) {
+              const commissionPercent = commissionRates[level - 1]
+              
+              console.log(`[COMMISSION] Level ${level}: percent=${commissionPercent}, referrer=${currentReferrerId}`)
+              
+              if (commissionPercent > 0) {
+                const commissionAmount = (deposit.amount_pkr * commissionPercent) / 100
+
+                console.log(`[COMMISSION] L${level} Commission: ${commissionAmount} PKR (${commissionPercent}%)`)
+
+                // Insert commission record
+                const { error: insertError } = await supabase
+                  .from('referral_commissions')
+                  .insert({
+                    referrer_id: currentReferrerId,
+                    referred_user_id: deposit.user_id,
+                    commission_type: 'deposit',
+                    level: level,
+                    amount: commissionAmount,
+                    source_amount: deposit.amount_pkr,
+                    commission_rate: commissionPercent,
+                    deposit_id: deposit_id,
+                    status: 'completed',
+                    created_at: new Date().toISOString()
+                  })
+
+                if (insertError) {
+                  console.error(`[COMMISSION] Failed to insert L${level} commission:`, insertError)
+                } else {
+                  console.log(`[COMMISSION] L${level} commission inserted successfully`)
+                  
+                  // Update referrer's balance
+                  console.log(`[COMMISSION] Updating L${level} referrer balance: user=${currentReferrerId}, amount=${commissionAmount}`)
+                  const { error: balanceError } = await supabase.rpc('increment_user_balance', {
+                    user_id: currentReferrerId,
+                    amount: commissionAmount
+                  })
+                  
+                  if (balanceError) {
+                    console.error(`[COMMISSION] Failed to update L${level} referrer balance:`, balanceError)
+                  } else {
+                    console.log(`[COMMISSION] L${level} referrer balance updated successfully`)
+                  }
+                }
+
+                // Get next level referrer
+                const { data: nextReferrer } = await supabase
+                  .from('user_profiles')
+                  .select('referred_by')
+                  .eq('id', currentReferrerId)
+                  .single()
+
+                currentReferrerId = nextReferrer?.referred_by || null
+              }
+            }
+          } else {
+            console.log(`[COMMISSION] User has no referrer, skipping commission processing`)
+          }
+        } else {
+          console.log(`[COMMISSION] Failed to load settings:`, settingsError)
+        }
+      } catch (commissionError) {
+        console.error('[COMMISSION] Error processing referral commissions:', commissionError)
+        // Don't fail the deposit approval if commission processing fails
+      }
 
       return NextResponse.json({ 
         success: true, 
@@ -264,8 +365,7 @@ export async function PATCH(request: NextRequest) {
       }
       
       if (currentAdmin) {
-        rejectData.approved_by = currentAdmin.id
-        rejectData.approved_at = new Date().toISOString()
+        rejectData.processed_by = currentAdmin.id
       }
 
       const { error: rejectError } = await supabase
@@ -286,6 +386,9 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error) {
     console.error('Admin deposit action error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : JSON.stringify(error)
+    }, { status: 500 })
   }
 }

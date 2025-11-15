@@ -18,9 +18,10 @@ interface Deposit {
   status: string
   rejection_reason: string | null
   created_at: string
-  approved_by?: string
-  approved_at?: string
-  approved_by_name?: string
+  processed_by?: string
+  processed_at?: string
+  processed_by_name?: string
+  admin_notes?: string
 }
 
 export default function AdminDepositsPage() {
@@ -90,7 +91,8 @@ export default function AdminDepositsPage() {
         ))
         alert('Deposit approved successfully!')
       } else {
-        alert('Failed to approve deposit: ' + (responseData.error || 'Unknown error'))
+        const errorMsg = responseData.details ? `${responseData.error}: ${responseData.details}` : (responseData.error || 'Unknown error')
+        alert('Failed to approve deposit: ' + errorMsg)
       }
     } catch (error) {
       console.error('Error approving deposit:', error)
@@ -329,13 +331,13 @@ export default function AdminDepositsPage() {
               )}
 
               {/* Admin Approval Info */}
-              {(deposit.status === 'approved' || deposit.status === 'rejected') && deposit.approved_by && (
+              {(deposit.status === 'approved' || deposit.status === 'rejected') && deposit.processed_by && (
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
                   <p className="text-sm text-blue-800">
-                    <strong>{deposit.status === 'approved' ? 'Approved' : 'Rejected'} by:</strong> {deposit.approved_by_name || `Admin (${deposit.approved_by.slice(0, 8)}...)`}
-                    {deposit.approved_at && (
+                    <strong>{deposit.status === 'approved' ? 'Approved' : 'Rejected'} by:</strong> {deposit.processed_by_name || `Admin (${deposit.processed_by.slice(0, 8)}...)`}
+                    {deposit.processed_at && (
                       <span className="ml-2 text-blue-600">
-                        on {formatDate(deposit.approved_at)}
+                        on {formatDate(deposit.processed_at)}
                       </span>
                     )}
                   </p>

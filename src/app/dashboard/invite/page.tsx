@@ -139,8 +139,9 @@ export default function InvitePage() {
       // Calculate earnings from referral commissions
       const { data: commissionData, error: commissionError } = await supabase
         .from('referral_commissions')
-        .select('commission_amount, level, created_at')
+        .select('amount, level, created_at, status')
         .eq('referrer_id', userId)
+        .eq('status', 'completed')
 
       let totalEarnings = 0
       let todayEarnings = 0
@@ -159,7 +160,7 @@ export default function InvitePage() {
         tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
         
         commissionData.forEach(commission => {
-          const amount = commission.commission_amount
+          const amount = commission.amount
           totalEarnings += amount
           
           // Calculate today's and yesterday's earnings using UTC date comparison

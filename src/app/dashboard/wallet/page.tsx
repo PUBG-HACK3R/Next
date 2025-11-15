@@ -167,12 +167,10 @@ export default function WalletPage() {
         .from('referral_commissions')
         .select(`
           id,
-          commission_amount,
+          amount,
           level,
           status,
-          created_at,
-          referred_user_id,
-          user_profiles!referred_user_id (full_name)
+          created_at
         `)
         .eq('referrer_id', userId)
         .order('created_at', { ascending: false })
@@ -202,10 +200,10 @@ export default function WalletPage() {
           allTransactions.push({
             id: commission.id,
             type: 'commission',
-            amount: commission.commission_amount,
+            amount: commission.amount,
             status: commission.status,
             created_at: commission.created_at,
-            description: `Level ${commission.level} referral commission from ${commission.user_profiles?.full_name || 'User'}`
+            description: `Level ${commission.level} referral commission`
           })
         })
       }
