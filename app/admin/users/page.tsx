@@ -862,6 +862,94 @@ export default function AdminUsersPage() {
                 </div>
               </div>
 
+              {/* Account Suspension Management */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Account Status</h4>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  {selectedUser.suspended ? (
+                    <div className="space-y-3">
+                      <div className="p-3 bg-red-50 border border-red-200 rounded">
+                        <p className="text-sm font-medium text-red-800">🔒 Account is SUSPENDED</p>
+                        <p className="text-xs text-red-700 mt-1">Suspended at: {formatDate(selectedUser.suspended_at || '')}</p>
+                        {selectedUser.suspension_reason && (
+                          <p className="text-xs text-red-700 mt-1">Reason: {selectedUser.suspension_reason}</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={unsuspendUser}
+                        disabled={suspending}
+                        className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50"
+                      >
+                        <Unlock className="w-4 h-4" />
+                        <span>{suspending ? 'Unsuspending...' : 'Unsuspend Account'}</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-700">✅ Account is ACTIVE</p>
+                      <button
+                        onClick={() => setShowSuspensionModal(true)}
+                        className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                      >
+                        <Lock className="w-4 h-4" />
+                        <span>Suspend Account</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Suspension Modal */}
+                  {showSuspensionModal && (
+                    <div className="mt-4 p-4 bg-white border border-red-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="font-medium text-gray-900">Suspend User Account</h5>
+                        <button
+                          onClick={() => {
+                            setShowSuspensionModal(false)
+                            setSuspensionReason('')
+                          }}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Suspension Reason (Optional)</label>
+                          <textarea
+                            value={suspensionReason}
+                            onChange={(e) => setSuspensionReason(e.target.value)}
+                            placeholder="Enter reason for suspension..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                            rows={3}
+                          />
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={suspendUser}
+                            disabled={suspending}
+                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {suspending ? 'Suspending...' : 'Confirm Suspension'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowSuspensionModal(false)
+                              setSuspensionReason('')
+                            }}
+                            className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        <div className="p-2 bg-red-50 border border-red-200 rounded">
+                          <p className="text-xs text-red-800">⚠️ Suspended users will see an alert when trying to log in and will not be able to access their account.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* User Stats */}
               {userStats && (
                 <div>
