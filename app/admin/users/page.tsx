@@ -405,16 +405,18 @@ export default function AdminUsersPage() {
 
       if (error) throw error
 
-      // Update local state
-      const updatedUser = {
-        ...selectedUser,
-        suspended: true,
-        suspended_at: new Date().toISOString(),
-        suspension_reason: suspensionReason
-      }
-      
-      setUsers(users.map(u => u.id === selectedUser.id ? updatedUser : u))
-      setSelectedUser(updatedUser)
+      // Fetch fresh data from database
+      const { data: freshUser, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', selectedUser.id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      // Update local state with fresh data
+      setUsers(users.map(u => u.id === selectedUser.id ? freshUser : u))
+      setSelectedUser(freshUser)
       setShowSuspensionModal(false)
       setSuspensionReason('')
       alert('User suspended successfully!')
@@ -441,16 +443,18 @@ export default function AdminUsersPage() {
 
       if (error) throw error
 
-      // Update local state
-      const updatedUser = {
-        ...selectedUser,
-        suspended: false,
-        suspended_at: undefined,
-        suspension_reason: undefined
-      }
-      
-      setUsers(users.map(u => u.id === selectedUser.id ? updatedUser : u))
-      setSelectedUser(updatedUser)
+      // Fetch fresh data from database
+      const { data: freshUser, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', selectedUser.id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      // Update local state with fresh data
+      setUsers(users.map(u => u.id === selectedUser.id ? freshUser : u))
+      setSelectedUser(freshUser)
       alert('User unsuspended successfully!')
     } catch (error: any) {
       console.error('Error unsuspending user:', error)
