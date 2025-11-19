@@ -25,7 +25,9 @@ import {
   HelpCircle,
   ArrowDownToLine,
   ArrowUpFromLine,
-  User
+  User,
+  Briefcase,
+  Lock
 } from 'lucide-react'
 
 // Dynamic imports for heavy components
@@ -64,6 +66,7 @@ export default function DashboardHome() {
     totalEarnings: 0,
     totalWithdrawals: 0
   })
+  const [lockedEarnings, setLockedEarnings] = useState(0)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -175,7 +178,7 @@ export default function DashboardHome() {
         .lte('end_date', now.toISOString())
 
       // Fetch all stats in parallel for better performance
-      const [depositsResult, withdrawalsResult, investmentsResult] = await Promise.allSettled([
+      const [depositsResult, withdrawalsResult, investmentsResult, profileResult] = await Promise.allSettled([
         supabase
           .from('deposits')
           .select('amount_pkr')
@@ -190,7 +193,12 @@ export default function DashboardHome() {
           .from('investments')
           .select('amount_invested, status, plans!inner(profit_percent)')
           .eq('user_id', userId)
-          .eq('status', 'completed')
+          .eq('status', 'completed'),
+        supabase
+          .from('user_profiles')
+          .select('earned_balance')
+          .eq('id', userId)
+          .single()
       ])
 
       const totalDeposits = depositsResult.status === 'fulfilled'
@@ -208,7 +216,12 @@ export default function DashboardHome() {
           }, 0) || 0
         : 0
 
+      const locked = profileResult.status === 'fulfilled'
+        ? profileResult.value.data?.earned_balance || 0
+        : 0
+
       setStats({ totalDeposits, totalEarnings, totalWithdrawals })
+      setLockedEarnings(locked)
     } catch (error) {
       console.error('Error fetching user stats:', error)
       setStats({ totalDeposits: 0, totalEarnings: 0, totalWithdrawals: 0 })
@@ -327,7 +340,7 @@ export default function DashboardHome() {
               </div>
               
               {/* Balance Stats */}
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-white/10">
                 <div className="text-center">
                   <div className="flex items-center justify-center w-10 h-10 bg-blue-500/20 rounded-xl mb-2 mx-auto">
                     <ArrowDownToLine className="w-5 h-5 text-blue-400" />
@@ -351,10 +364,18 @@ export default function DashboardHome() {
                   <p className="text-white/60 text-xs mb-1">Withdrawals</p>
                   <p className="text-white font-semibold text-sm">{formatCurrency(stats.totalWithdrawals)}</p>
                 </div>
+
+                <div className="text-center">
+                  <div className="flex items-center justify-center w-10 h-10 bg-yellow-500/20 rounded-xl mb-2 mx-auto">
+                    <Lock className="w-5 h-5 text-yellow-400" />
+                  </div>
+                  <p className="text-white/60 text-xs mb-1">Locked Earnings</p>
+                  <p className="text-white font-semibold text-sm">{formatCurrency(lockedEarnings)}</p>
+                </div>
               </div>
               
               {/* Quick Balance Actions */}
-              <div className="flex space-x-3 mt-4">
+              <div className="grid grid-cols-3 gap-3 mt-4">
                 <Link href="/dashboard/deposit" className="flex-1">
                   <button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl border border-green-400/30 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
@@ -371,6 +392,16 @@ export default function DashboardHome() {
                     <div className="relative flex items-center justify-center space-x-2">
                       <Minus className="w-4 h-4" />
                       <span>Withdraw</span>
+                    </div>
+                  </button>
+                </Link>
+
+                <Link href="/dashboard/my-investments" className="flex-1">
+                  <button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl border border-blue-400/30 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                    <div className="relative flex items-center justify-center space-x-2">
+                      <Briefcase className="w-4 h-4" />
+                      <span>Investments</span>
                     </div>
                   </button>
                 </Link>
@@ -461,7 +492,7 @@ export default function DashboardHome() {
                     </div>
 
                     {/* Features */}
-                    <div className="mb-3">
+                    <div className="mb-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <DollarSign className="w-3 h-3 text-green-400" />
@@ -472,6 +503,25 @@ export default function DashboardHome() {
                             {plan.user_purchase_count || 0}/{plan.purchase_limit_per_user} purchases
                           </span>
                         )}
+                      </div>
+
+                      {/* Earnings Examples */}
+                      <div className="bg-white/5 rounded-lg p-2 border border-white/10">
+                        <p className="text-white/60 text-xs mb-2 font-semibold">Earnings Examples:</p>
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="bg-blue-500/20 rounded p-1.5 text-center">
+                            <div className="text-white/70">Min Investment</div>
+                            <div className="text-green-400 font-bold">{formatCurrency((plan.min_investment * plan.profit_percent) / 100)}</div>
+                          </div>
+                          <div className="bg-purple-500/20 rounded p-1.5 text-center">
+                            <div className="text-white/70">Avg (50K)</div>
+                            <div className="text-green-400 font-bold">{formatCurrency((50000 * plan.profit_percent) / 100)}</div>
+                          </div>
+                          <div className="bg-orange-500/20 rounded p-1.5 text-center">
+                            <div className="text-white/70">Max Investment</div>
+                            <div className="text-green-400 font-bold">{formatCurrency(((plan.max_investment || 50000) * plan.profit_percent) / 100)}</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 

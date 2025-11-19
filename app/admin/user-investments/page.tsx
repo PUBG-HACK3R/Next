@@ -51,6 +51,8 @@ interface UserInvestmentSummary {
   activeCount: number
   completedCount: number
   totalEarnings: number
+  currentBalance: number
+  lockedEarnings: number
 }
 
 export default function AdminUserInvestmentsPage() {
@@ -99,7 +101,9 @@ export default function AdminUserInvestmentsPage() {
           ),
           user_profiles (
             full_name,
-            email
+            email,
+            balance,
+            earned_balance
           )
         `)
         .order('created_at', { ascending: false })
@@ -129,7 +133,9 @@ export default function AdminUserInvestmentsPage() {
           totalInvested: 0,
           activeCount: 0,
           completedCount: 0,
-          totalEarnings: 0
+          totalEarnings: 0,
+          currentBalance: (inv.user_profiles as any).balance || 0,
+          lockedEarnings: (inv.user_profiles as any).earned_balance || 0
         })
       }
 
@@ -343,7 +349,7 @@ export default function AdminUserInvestmentsPage() {
                     {userSummaries.find(s => s.userId === selectedUser)?.userName}
                   </h2>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                     <div className="bg-blue-50 rounded-lg p-4 text-center">
                       <div className="text-2xl font-bold text-blue-600">
                         {userSummaries.find(s => s.userId === selectedUser)?.activeCount}
@@ -364,12 +370,28 @@ export default function AdminUserInvestmentsPage() {
                       </div>
                       <div className="text-xs text-gray-600 mt-1">Total Invested</div>
                     </div>
+                  </div>
 
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="bg-orange-50 rounded-lg p-4 text-center">
                       <div className="text-lg font-bold text-orange-600">
                         {formatCurrency(userSummaries.find(s => s.userId === selectedUser)?.totalEarnings || 0)}
                       </div>
                       <div className="text-xs text-gray-600 mt-1">Total Earnings</div>
+                    </div>
+
+                    <div className="bg-yellow-50 rounded-lg p-4 text-center border-2 border-yellow-300">
+                      <div className="text-lg font-bold text-yellow-700">
+                        {formatCurrency(userSummaries.find(s => s.userId === selectedUser)?.lockedEarnings || 0)}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">🔒 Locked Earnings</div>
+                    </div>
+
+                    <div className="bg-emerald-50 rounded-lg p-4 text-center border-2 border-emerald-300">
+                      <div className="text-lg font-bold text-emerald-700">
+                        {formatCurrency(userSummaries.find(s => s.userId === selectedUser)?.currentBalance || 0)}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">💰 Current Balance</div>
                     </div>
                   </div>
                 </div>
