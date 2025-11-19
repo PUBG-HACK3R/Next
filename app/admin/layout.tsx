@@ -13,7 +13,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Briefcase
 } from 'lucide-react'
 import WhatsAppSupport from '@/components/WhatsAppSupport'
 import ModernHeader from '@/components/ModernHeader'
@@ -71,6 +72,7 @@ export default function AdminLayout({
     { href: '/admin/deposits', icon: CreditCard, label: 'Manage Deposits' },
     { href: '/admin/withdrawals', icon: Banknote, label: 'Manage Withdrawals' },
     { href: '/admin/users', icon: Users, label: 'Manage Users' },
+    { href: '/admin/user-investments', icon: Briefcase, label: 'User Investments' },
     { href: '/admin/plans', icon: TrendingUp, label: 'Manage Plans' },
     { href: '/admin/settings', icon: Settings, label: 'Site Settings' },
   ]

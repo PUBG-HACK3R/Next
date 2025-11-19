@@ -1,0 +1,82 @@
+================================================================================
+                    CRITICAL BUG FIX - LOCKED EARNINGS ISSUE
+================================================================================
+
+ISSUE REPORTED:
+  User purchased 2 plans:
+  - Plan 1: 1,000 PKR (3-day plan)
+  - Plan 2: 4,000 PKR (7-day plan)
+  
+  When Plan 1 completed:
+  ❌ User did NOT get the profit
+  ❌ User did NOT get the invested capital (1,000 PKR)
+  ❌ Plan showed as "completed" but no funds received
+  ❌ Plan 2 also affected
+
+ROOT CAUSE:
+  File: fix-income-transactions-recording.sql (Line 90)
+  
+  When investment completes:
+    PERFORM transfer_earned_to_main(user_id_param);
+    
+  This transfers ALL locked earnings from ALL investments, not just the 
+  completed one. So when Plan 1 completes:
+  - Transfers Plan 1 earnings ✓
+  - Transfers Plan 2 earnings ✗ (WRONG!)
+  - Resets earned_balance to 0 ✗ (WRONG!)
+  - User loses Plan 2 capital + earnings
+
+SOLUTION:
+  New function: transfer_investment_earnings_to_main(user_id, investment_id)
+  
+  This function:
+  1. Only transfers earnings from the SPECIFIC completed investment
+  2. Keeps earnings from other active investments locked
+  3. Preserves capital for other plans
+
+BEFORE FIX:
+  User balance: 5,000 PKR (5,000 + 4,000 invested)
+  Locked earnings: 600 PKR (100 from 3-day + 500 from 7-day)
+  
+  When 3-day completes:
+  ❌ transfer_earned_to_main() transfers ALL 600 PKR
+  ❌ balance = 5,600 PKR (WRONG - missing 3-day capital)
+  ❌ earned_balance = 0 (WRONG - lost 7-day earnings)
+  ❌ 7-day plan shows completed but no funds
+
+AFTER FIX:
+  User balance: 5,000 PKR (5,000 + 4,000 invested)
+  Locked earnings: 600 PKR (100 from 3-day + 500 from 7-day)
+  
+  When 3-day completes:
+  ✅ transfer_investment_earnings_to_main(user_id, 3day_investment_id)
+  ✅ Transfers only 100 PKR (3-day earnings)
+  ✅ balance = 6,100 PKR (5,000 + 100 earnings + 1,000 capital)
+  ✅ earned_balance = 500 PKR (only 7-day earnings remain)
+  ✅ 7-day plan continues normally
+
+DEPLOYMENT:
+  1. Run: DEPLOY-LOCKED-EARNINGS-FIX.sql
+  2. Run: RECOVER-AFFECTED-USERS.sql
+  3. Manually recover affected users
+  4. Test with new investments
+
+FILES CREATED:
+  ✓ DEPLOY-LOCKED-EARNINGS-FIX.sql - Deployment script
+  ✓ RECOVER-AFFECTED-USERS.sql - Recovery analysis
+  ✓ LOCKED-EARNINGS-BUG-REPORT.md - Detailed documentation
+  ✓ QUICK-FIX-GUIDE.md - Quick deployment guide
+  ✓ BUG-SUMMARY.txt - This file
+
+SEVERITY: 🔴 CRITICAL
+  - Affects real user funds
+  - Multiple users likely affected
+  - Deploy immediately
+
+TIME TO DEPLOY: ~5 minutes
+TIME TO VERIFY: ~2 minutes
+TIME TO RECOVER: ~30 minutes (per user)
+
+STATUS: ✅ READY TO DEPLOY
+
+================================================================================
